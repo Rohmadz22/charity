@@ -1,5 +1,5 @@
 
-(function(l, r) { if (!l || l.getElementById('livereloadscript')) return; r = l.createElement('script'); r.async = 1; r.src = '//' + (self.location.host || 'localhost').split(':')[0] + ':35730/livereload.js?snipver=1'; r.id = 'livereloadscript'; l.getElementsByTagName('head')[0].appendChild(r) })(self.document);
+(function(l, r) { if (!l || l.getElementById('livereloadscript')) return; r = l.createElement('script'); r.async = 1; r.src = '//' + (self.location.host || 'localhost').split(':')[0] + ':35729/livereload.js?snipver=1'; r.id = 'livereloadscript'; l.getElementsByTagName('head')[0].appendChild(r) })(self.document);
 var app = (function () {
     'use strict';
 
@@ -40,18 +40,6 @@ var app = (function () {
     }
     function is_empty(obj) {
         return Object.keys(obj).length === 0;
-    }
-    function validate_store(store, name) {
-        if (store != null && typeof store.subscribe !== 'function') {
-            throw new Error(`'${name}' is not a store with a 'subscribe' method`);
-        }
-    }
-    function subscribe(store, ...callbacks) {
-        if (store == null) {
-            return noop;
-        }
-        const unsub = store.subscribe(...callbacks);
-        return unsub.unsubscribe ? () => unsub.unsubscribe() : unsub;
     }
     function create_slot(definition, ctx, $$scope, fn) {
         if (definition) {
@@ -5278,7 +5266,7 @@ var app = (function () {
     	let h20;
     	let t2;
     	let p0;
-    	let t3_value = /*data*/ ctx[1].title + "";
+    	let t3_value = /*data*/ ctx[0].title + "";
     	let t3;
     	let t4;
     	let ul;
@@ -5299,7 +5287,7 @@ var app = (function () {
     	let div11;
     	let div5;
     	let h21;
-    	let t9_value = /*data*/ ctx[1].title + "";
+    	let t9_value = /*data*/ ctx[0].title + "";
     	let t9;
     	let t10;
     	let p1;
@@ -5427,118 +5415,118 @@ var app = (function () {
     			i = element("i");
     			t33 = text(" Donate\r\n\tnow");
     			attr_dev(div0, "class", "xs-black-overlay");
-    			add_location(div0, file, 45, 1, 988);
-    			add_location(h20, file, 48, 1, 1105);
-    			add_location(p0, file, 49, 1, 1127);
+    			add_location(div0, file, 45, 1, 989);
+    			add_location(h20, file, 48, 1, 1106);
+    			add_location(p0, file, 49, 1, 1128);
     			attr_dev(a, "href", "/");
     			attr_dev(a, "class", "color-white");
-    			add_location(a, file, 52, 1, 1223);
+    			add_location(a, file, 52, 1, 1224);
     			attr_dev(li, "class", "badge badge-pill badge-primary");
-    			add_location(li, file, 51, 1, 1177);
+    			add_location(li, file, 51, 1, 1178);
     			attr_dev(ul, "class", "xs-breadcumb");
-    			add_location(ul, file, 50, 1, 1149);
+    			add_location(ul, file, 50, 1, 1150);
     			attr_dev(div1, "class", "color-white xs-inner-banner-content");
-    			add_location(div1, file, 47, 1, 1053);
+    			add_location(div1, file, 47, 1, 1054);
     			attr_dev(div2, "class", "container");
-    			add_location(div2, file, 46, 1, 1027);
+    			add_location(div2, file, 46, 1, 1028);
     			attr_dev(section0, "class", "xs-banner-inner-section parallax-window");
     			set_style(section0, "background-image", "url('/assets/images/katt-yukawa-K0E6E0a0R3A-unsplash.jpg')");
-    			add_location(section0, file, 43, 1, 841);
-    			if (!src_url_equal(img.src, img_src_value = /*data*/ ctx[1].thumbnail)) attr_dev(img, "src", img_src_value);
+    			add_location(section0, file, 43, 1, 842);
+    			if (!src_url_equal(img.src, img_src_value = /*data*/ ctx[0].thumbnail)) attr_dev(img, "src", img_src_value);
     			attr_dev(img, "class", "img-responsive");
     			attr_dev(img, "alt", "Family Images");
-    			add_location(img, file, 64, 38, 1588);
+    			add_location(img, file, 64, 38, 1589);
     			attr_dev(div3, "class", "xs-donation-form-images svelte-1qtpgtk");
-    			add_location(div3, file, 64, 1, 1551);
+    			add_location(div3, file, 64, 1, 1552);
     			attr_dev(div4, "class", "col-lg-6");
-    			add_location(div4, file, 63, 1, 1526);
+    			add_location(div4, file, 63, 1, 1527);
     			attr_dev(h21, "class", "xs-title");
-    			add_location(h21, file, 70, 1, 1779);
+    			add_location(h21, file, 70, 1, 1780);
     			attr_dev(span0, "class", "color-green");
-    			add_location(span0, file, 72, 20, 1898);
+    			add_location(span0, file, 72, 20, 1899);
     			attr_dev(span1, "class", "color-green");
-    			add_location(span1, file, 73, 29, 1962);
+    			add_location(span1, file, 73, 29, 1963);
     			attr_dev(p1, "class", "small");
-    			add_location(p1, file, 71, 1, 1820);
+    			add_location(p1, file, 71, 1, 1821);
     			attr_dev(span2, "class", "xs-separetor v2");
-    			add_location(span2, file, 74, 46, 2022);
+    			add_location(span2, file, 74, 46, 2023);
     			attr_dev(div5, "class", "xs-heading xs-mb-30");
-    			add_location(div5, file, 69, 1, 1743);
+    			add_location(div5, file, 69, 1, 1744);
     			attr_dev(span3, "class", "color-light-red");
-    			add_location(span3, file, 80, 45, 2281);
+    			add_location(span3, file, 80, 45, 2282);
     			attr_dev(label0, "for", "xs-donate-name");
-    			add_location(label0, file, 80, 1, 2237);
+    			add_location(label0, file, 80, 1, 2238);
     			attr_dev(input0, "type", "text");
     			attr_dev(input0, "name", "name");
     			attr_dev(input0, "id", "xs-donate-name");
     			attr_dev(input0, "class", "form-control");
     			attr_dev(input0, "placeholder", "Minimum of $5");
-    			add_location(input0, file, 81, 37, 2332);
+    			add_location(input0, file, 81, 37, 2333);
     			attr_dev(div6, "class", "xs-input-group");
-    			add_location(div6, file, 79, 1, 2206);
+    			add_location(div6, file, 79, 1, 2207);
     			attr_dev(span4, "class", "color-light-red");
-    			add_location(span4, file, 88, 8, 2567);
+    			add_location(span4, file, 88, 8, 2568);
     			attr_dev(label1, "for", "xs-donate-name");
-    			add_location(label1, file, 86, 4, 2510);
+    			add_location(label1, file, 86, 4, 2511);
     			attr_dev(input1, "type", "text");
     			attr_dev(input1, "name", "name");
     			attr_dev(input1, "id", "xs-donate-name");
     			attr_dev(input1, "class", "form-control");
     			attr_dev(input1, "placeholder", "Your awesome name");
-    			add_location(input1, file, 90, 3, 2625);
+    			add_location(input1, file, 90, 3, 2626);
     			attr_dev(span5, "class", "color-light-red");
-    			add_location(span5, file, 101, 12, 2882);
+    			add_location(span5, file, 101, 12, 2883);
     			attr_dev(label2, "for", "xs-donate-email");
-    			add_location(label2, file, 99, 8, 2815);
+    			add_location(label2, file, 99, 8, 2816);
     			attr_dev(input2, "type", "email");
     			attr_dev(input2, "name", "email");
     			attr_dev(input2, "id", "xs-donate-email");
     			attr_dev(input2, "class", "form-control");
     			attr_dev(input2, "placeholder", "email@awesome.com");
-    			add_location(input2, file, 103, 8, 2949);
+    			add_location(input2, file, 103, 8, 2950);
     			attr_dev(div7, "class", "xs-input-group");
-    			add_location(div7, file, 98, 8, 2776);
+    			add_location(div7, file, 98, 8, 2777);
     			attr_dev(input3, "type", "checkbox");
     			attr_dev(input3, "name", "agree");
     			attr_dev(input3, "id", "xs-donate-agree");
     			attr_dev(input3, "class", "svelte-1qtpgtk");
-    			add_location(input3, file, 112, 4, 3193);
+    			add_location(input3, file, 112, 4, 3194);
     			attr_dev(span6, "class", "color-light-red");
-    			add_location(span6, file, 115, 4, 3310);
+    			add_location(span6, file, 115, 4, 3311);
     			attr_dev(label3, "for", "xs-donate-agree");
     			attr_dev(label3, "class", "svelte-1qtpgtk");
-    			add_location(label3, file, 113, 4, 3258);
+    			add_location(label3, file, 113, 4, 3259);
     			attr_dev(div8, "class", "xs-input-group svelte-1qtpgtk");
     			attr_dev(div8, "id", "xs-input-checkbox");
-    			add_location(div8, file, 111, 4, 3136);
+    			add_location(div8, file, 111, 4, 3137);
     			attr_dev(i, "class", "fa fa-heart");
-    			add_location(i, file, 139, 9, 3963);
+    			add_location(i, file, 139, 9, 3964);
     			attr_dev(span7, "class", "badge");
-    			add_location(span7, file, 138, 47, 3940);
+    			add_location(span7, file, 138, 47, 3941);
     			attr_dev(button, "type", "submit");
     			attr_dev(button, "class", "btn btn-warning");
-    			add_location(button, file, 138, 1, 3894);
-    			add_location(div9, file, 97, 4, 2761);
+    			add_location(button, file, 138, 1, 3895);
+    			add_location(div9, file, 97, 4, 2762);
     			attr_dev(div10, "class", "xs-input-group");
-    			add_location(div10, file, 85, 1, 2476);
+    			add_location(div10, file, 85, 1, 2477);
     			attr_dev(form, "action", "#");
     			attr_dev(form, "method", "post");
     			attr_dev(form, "id", "xs-donation-form");
     			attr_dev(form, "class", "xs-donation-form");
     			attr_dev(form, "name", "xs-donation-form");
-    			add_location(form, file, 77, 1, 2098);
+    			add_location(form, file, 77, 1, 2099);
     			attr_dev(div11, "class", "xs-donation-form-wraper");
-    			add_location(div11, file, 68, 1, 1703);
+    			add_location(div11, file, 68, 1, 1704);
     			attr_dev(div12, "class", "col-lg-6");
-    			add_location(div12, file, 67, 1, 1678);
+    			add_location(div12, file, 67, 1, 1679);
     			attr_dev(div13, "class", "row");
-    			add_location(div13, file, 62, 1, 1506);
+    			add_location(div13, file, 62, 1, 1507);
     			attr_dev(div14, "class", "container");
-    			add_location(div14, file, 61, 1, 1480);
+    			add_location(div14, file, 61, 1, 1481);
     			attr_dev(section1, "class", "xs-section-padding bg-gray");
-    			add_location(section1, file, 60, 1, 1433);
+    			add_location(section1, file, 60, 1, 1434);
     			attr_dev(main, "class", "xs-main");
-    			add_location(main, file, 58, 1, 1375);
+    			add_location(main, file, 58, 1, 1376);
     		},
     		m: function mount(target, anchor) {
     			insert_dev(target, section0, anchor);
@@ -5614,13 +5602,13 @@ var app = (function () {
     			append_dev(button, t33);
     		},
     		p: function update(ctx, dirty) {
-    			if (dirty & /*data*/ 2 && t3_value !== (t3_value = /*data*/ ctx[1].title + "")) set_data_dev(t3, t3_value);
+    			if (dirty & /*data*/ 1 && t3_value !== (t3_value = /*data*/ ctx[0].title + "")) set_data_dev(t3, t3_value);
 
-    			if (dirty & /*data*/ 2 && !src_url_equal(img.src, img_src_value = /*data*/ ctx[1].thumbnail)) {
+    			if (dirty & /*data*/ 1 && !src_url_equal(img.src, img_src_value = /*data*/ ctx[0].thumbnail)) {
     				attr_dev(img, "src", img_src_value);
     			}
 
-    			if (dirty & /*data*/ 2 && t9_value !== (t9_value = /*data*/ ctx[1].title + "")) set_data_dev(t9, t9_value);
+    			if (dirty & /*data*/ 1 && t9_value !== (t9_value = /*data*/ ctx[0].title + "")) set_data_dev(t9, t9_value);
     		},
     		d: function destroy(detaching) {
     			if (detaching) detach_dev(section0);
@@ -5647,7 +5635,7 @@ var app = (function () {
     	let footer;
     	let current;
     	header = new Header({ $$inline: true });
-    	let if_block = /*data*/ ctx[1] && create_if_block(ctx);
+    	let if_block = /*data*/ ctx[0] && create_if_block(ctx);
     	footer = new Footer({ $$inline: true });
 
     	const block = {
@@ -5670,7 +5658,7 @@ var app = (function () {
     			current = true;
     		},
     		p: function update(ctx, [dirty]) {
-    			if (/*data*/ ctx[1]) {
+    			if (/*data*/ ctx[0]) {
     				if (if_block) {
     					if_block.p(ctx, dirty);
     				} else {
@@ -5715,16 +5703,9 @@ var app = (function () {
     }
 
     function instance$1($$self, $$props, $$invalidate) {
-    	let $params,
-    		$$unsubscribe_params = noop,
-    		$$subscribe_params = () => ($$unsubscribe_params(), $$unsubscribe_params = subscribe(params, $$value => $$invalidate(2, $params = $$value)), params);
-
-    	$$self.$$.on_destroy.push(() => $$unsubscribe_params());
     	let { $$slots: slots = {}, $$scope } = $$props;
     	validate_slots('Donation', slots, []);
     	let { params } = $$props;
-    	validate_store(params, 'params');
-    	$$subscribe_params();
     	let data = {};
 
     	function getCharity(id) {
@@ -5733,7 +5714,7 @@ var app = (function () {
     		});
     	}
 
-    	data = getCharity$($params);
+    	data = getCharity(params.id);
     	const writable_props = ['params'];
 
     	Object.keys($$props).forEach(key => {
@@ -5741,7 +5722,7 @@ var app = (function () {
     	});
 
     	$$self.$$set = $$props => {
-    		if ('params' in $$props) $$subscribe_params($$invalidate(0, params = $$props.params));
+    		if ('params' in $$props) $$invalidate(1, params = $$props.params);
     	};
 
     	$$self.$capture_state = () => ({
@@ -5750,26 +5731,25 @@ var app = (function () {
     		charities: charities.charities,
     		params,
     		data,
-    		getCharity,
-    		$params
+    		getCharity
     	});
 
     	$$self.$inject_state = $$props => {
-    		if ('params' in $$props) $$subscribe_params($$invalidate(0, params = $$props.params));
-    		if ('data' in $$props) $$invalidate(1, data = $$props.data);
+    		if ('params' in $$props) $$invalidate(1, params = $$props.params);
+    		if ('data' in $$props) $$invalidate(0, data = $$props.data);
     	};
 
     	if ($$props && "$$inject" in $$props) {
     		$$self.$inject_state($$props.$$inject);
     	}
 
-    	return [params, data];
+    	return [data, params];
     }
 
     class Donation extends SvelteComponentDev {
     	constructor(options) {
     		super(options);
-    		init$1(this, options, instance$1, create_fragment$1, safe_not_equal, { params: 0 });
+    		init$1(this, options, instance$1, create_fragment$1, safe_not_equal, { params: 1 });
 
     		dispatch_dev("SvelteRegisterComponent", {
     			component: this,
@@ -5781,7 +5761,7 @@ var app = (function () {
     		const { ctx } = this.$$;
     		const props = options.props || {};
 
-    		if (/*params*/ ctx[0] === undefined && !('params' in props)) {
+    		if (/*params*/ ctx[1] === undefined && !('params' in props)) {
     			console.warn("<Donation> was created without expected prop 'params'");
     		}
     	}

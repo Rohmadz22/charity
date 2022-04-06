@@ -1,6 +1,6 @@
 <!-- welcome section -->
-<section class="xs-welcome-slider">
-    <div class="xs-banner-slider owl-carousel">
+<section>
+    <div>
         <div class="xs-welcome-content"style="background-image: url(assets/images/slide1.png);">
             <div class="container">
                 <div class="xs-welcome-wraper color-white">

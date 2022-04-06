@@ -1,5 +1,5 @@
 
-(function(l, r) { if (!l || l.getElementById('livereloadscript')) return; r = l.createElement('script'); r.async = 1; r.src = '//' + (self.location.host || 'localhost').split(':')[0] + ':35731/livereload.js?snipver=1'; r.id = 'livereloadscript'; l.getElementsByTagName('head')[0].appendChild(r) })(self.document);
+(function(l, r) { if (!l || l.getElementById('livereloadscript')) return; r = l.createElement('script'); r.async = 1; r.src = '//' + (self.location.host || 'localhost').split(':')[0] + ':35730/livereload.js?snipver=1'; r.id = 'livereloadscript'; l.getElementsByTagName('head')[0].appendChild(r) })(self.document);
 var app = (function () {
     'use strict';
 
@@ -40,6 +40,18 @@ var app = (function () {
     }
     function is_empty(obj) {
         return Object.keys(obj).length === 0;
+    }
+    function validate_store(store, name) {
+        if (store != null && typeof store.subscribe !== 'function') {
+            throw new Error(`'${name}' is not a store with a 'subscribe' method`);
+        }
+    }
+    function subscribe(store, ...callbacks) {
+        if (store == null) {
+            return noop;
+        }
+        const unsub = store.subscribe(...callbacks);
+        return unsub.unsubscribe ? () => unsub.unsubscribe() : unsub;
     }
     function create_slot(definition, ctx, $$scope, fn) {
         if (definition) {
@@ -306,7 +318,7 @@ var app = (function () {
         }
         component.$$.dirty[(i / 31) | 0] |= (1 << (i % 31));
     }
-    function init(component, options, instance, create_fragment, not_equal, props, append_styles, dirty = [-1]) {
+    function init$1(component, options, instance, create_fragment, not_equal, props, append_styles, dirty = [-1]) {
         const parent_component = current_component;
         set_current_component(component);
         const $$ = component.$$ = {
@@ -471,9 +483,1240 @@ var app = (function () {
         $inject_state() { }
     }
 
+    var commonjsGlobal = typeof globalThis !== 'undefined' ? globalThis : typeof window !== 'undefined' ? window : typeof global !== 'undefined' ? global : typeof self !== 'undefined' ? self : {};
+
+    function createCommonjsModule(fn) {
+      var module = { exports: {} };
+    	return fn(module, module.exports), module.exports;
+    }
+
+    var page = createCommonjsModule(function (module, exports) {
+    (function (global, factory) {
+    	module.exports = factory() ;
+    }(commonjsGlobal, (function () {
+    var isarray = Array.isArray || function (arr) {
+      return Object.prototype.toString.call(arr) == '[object Array]';
+    };
+
+    /**
+     * Expose `pathToRegexp`.
+     */
+    var pathToRegexp_1 = pathToRegexp;
+    var parse_1 = parse;
+    var compile_1 = compile;
+    var tokensToFunction_1 = tokensToFunction;
+    var tokensToRegExp_1 = tokensToRegExp;
+
+    /**
+     * The main path matching regexp utility.
+     *
+     * @type {RegExp}
+     */
+    var PATH_REGEXP = new RegExp([
+      // Match escaped characters that would otherwise appear in future matches.
+      // This allows the user to escape special characters that won't transform.
+      '(\\\\.)',
+      // Match Express-style parameters and un-named parameters with a prefix
+      // and optional suffixes. Matches appear as:
+      //
+      // "/:test(\\d+)?" => ["/", "test", "\d+", undefined, "?", undefined]
+      // "/route(\\d+)"  => [undefined, undefined, undefined, "\d+", undefined, undefined]
+      // "/*"            => ["/", undefined, undefined, undefined, undefined, "*"]
+      '([\\/.])?(?:(?:\\:(\\w+)(?:\\(((?:\\\\.|[^()])+)\\))?|\\(((?:\\\\.|[^()])+)\\))([+*?])?|(\\*))'
+    ].join('|'), 'g');
+
+    /**
+     * Parse a string for the raw tokens.
+     *
+     * @param  {String} str
+     * @return {Array}
+     */
+    function parse (str) {
+      var tokens = [];
+      var key = 0;
+      var index = 0;
+      var path = '';
+      var res;
+
+      while ((res = PATH_REGEXP.exec(str)) != null) {
+        var m = res[0];
+        var escaped = res[1];
+        var offset = res.index;
+        path += str.slice(index, offset);
+        index = offset + m.length;
+
+        // Ignore already escaped sequences.
+        if (escaped) {
+          path += escaped[1];
+          continue
+        }
+
+        // Push the current path onto the tokens.
+        if (path) {
+          tokens.push(path);
+          path = '';
+        }
+
+        var prefix = res[2];
+        var name = res[3];
+        var capture = res[4];
+        var group = res[5];
+        var suffix = res[6];
+        var asterisk = res[7];
+
+        var repeat = suffix === '+' || suffix === '*';
+        var optional = suffix === '?' || suffix === '*';
+        var delimiter = prefix || '/';
+        var pattern = capture || group || (asterisk ? '.*' : '[^' + delimiter + ']+?');
+
+        tokens.push({
+          name: name || key++,
+          prefix: prefix || '',
+          delimiter: delimiter,
+          optional: optional,
+          repeat: repeat,
+          pattern: escapeGroup(pattern)
+        });
+      }
+
+      // Match any characters still remaining.
+      if (index < str.length) {
+        path += str.substr(index);
+      }
+
+      // If the path exists, push it onto the end.
+      if (path) {
+        tokens.push(path);
+      }
+
+      return tokens
+    }
+
+    /**
+     * Compile a string to a template function for the path.
+     *
+     * @param  {String}   str
+     * @return {Function}
+     */
+    function compile (str) {
+      return tokensToFunction(parse(str))
+    }
+
+    /**
+     * Expose a method for transforming tokens into the path function.
+     */
+    function tokensToFunction (tokens) {
+      // Compile all the tokens into regexps.
+      var matches = new Array(tokens.length);
+
+      // Compile all the patterns before compilation.
+      for (var i = 0; i < tokens.length; i++) {
+        if (typeof tokens[i] === 'object') {
+          matches[i] = new RegExp('^' + tokens[i].pattern + '$');
+        }
+      }
+
+      return function (obj) {
+        var path = '';
+        var data = obj || {};
+
+        for (var i = 0; i < tokens.length; i++) {
+          var token = tokens[i];
+
+          if (typeof token === 'string') {
+            path += token;
+
+            continue
+          }
+
+          var value = data[token.name];
+          var segment;
+
+          if (value == null) {
+            if (token.optional) {
+              continue
+            } else {
+              throw new TypeError('Expected "' + token.name + '" to be defined')
+            }
+          }
+
+          if (isarray(value)) {
+            if (!token.repeat) {
+              throw new TypeError('Expected "' + token.name + '" to not repeat, but received "' + value + '"')
+            }
+
+            if (value.length === 0) {
+              if (token.optional) {
+                continue
+              } else {
+                throw new TypeError('Expected "' + token.name + '" to not be empty')
+              }
+            }
+
+            for (var j = 0; j < value.length; j++) {
+              segment = encodeURIComponent(value[j]);
+
+              if (!matches[i].test(segment)) {
+                throw new TypeError('Expected all "' + token.name + '" to match "' + token.pattern + '", but received "' + segment + '"')
+              }
+
+              path += (j === 0 ? token.prefix : token.delimiter) + segment;
+            }
+
+            continue
+          }
+
+          segment = encodeURIComponent(value);
+
+          if (!matches[i].test(segment)) {
+            throw new TypeError('Expected "' + token.name + '" to match "' + token.pattern + '", but received "' + segment + '"')
+          }
+
+          path += token.prefix + segment;
+        }
+
+        return path
+      }
+    }
+
+    /**
+     * Escape a regular expression string.
+     *
+     * @param  {String} str
+     * @return {String}
+     */
+    function escapeString (str) {
+      return str.replace(/([.+*?=^!:${}()[\]|\/])/g, '\\$1')
+    }
+
+    /**
+     * Escape the capturing group by escaping special characters and meaning.
+     *
+     * @param  {String} group
+     * @return {String}
+     */
+    function escapeGroup (group) {
+      return group.replace(/([=!:$\/()])/g, '\\$1')
+    }
+
+    /**
+     * Attach the keys as a property of the regexp.
+     *
+     * @param  {RegExp} re
+     * @param  {Array}  keys
+     * @return {RegExp}
+     */
+    function attachKeys (re, keys) {
+      re.keys = keys;
+      return re
+    }
+
+    /**
+     * Get the flags for a regexp from the options.
+     *
+     * @param  {Object} options
+     * @return {String}
+     */
+    function flags (options) {
+      return options.sensitive ? '' : 'i'
+    }
+
+    /**
+     * Pull out keys from a regexp.
+     *
+     * @param  {RegExp} path
+     * @param  {Array}  keys
+     * @return {RegExp}
+     */
+    function regexpToRegexp (path, keys) {
+      // Use a negative lookahead to match only capturing groups.
+      var groups = path.source.match(/\((?!\?)/g);
+
+      if (groups) {
+        for (var i = 0; i < groups.length; i++) {
+          keys.push({
+            name: i,
+            prefix: null,
+            delimiter: null,
+            optional: false,
+            repeat: false,
+            pattern: null
+          });
+        }
+      }
+
+      return attachKeys(path, keys)
+    }
+
+    /**
+     * Transform an array into a regexp.
+     *
+     * @param  {Array}  path
+     * @param  {Array}  keys
+     * @param  {Object} options
+     * @return {RegExp}
+     */
+    function arrayToRegexp (path, keys, options) {
+      var parts = [];
+
+      for (var i = 0; i < path.length; i++) {
+        parts.push(pathToRegexp(path[i], keys, options).source);
+      }
+
+      var regexp = new RegExp('(?:' + parts.join('|') + ')', flags(options));
+
+      return attachKeys(regexp, keys)
+    }
+
+    /**
+     * Create a path regexp from string input.
+     *
+     * @param  {String} path
+     * @param  {Array}  keys
+     * @param  {Object} options
+     * @return {RegExp}
+     */
+    function stringToRegexp (path, keys, options) {
+      var tokens = parse(path);
+      var re = tokensToRegExp(tokens, options);
+
+      // Attach keys back to the regexp.
+      for (var i = 0; i < tokens.length; i++) {
+        if (typeof tokens[i] !== 'string') {
+          keys.push(tokens[i]);
+        }
+      }
+
+      return attachKeys(re, keys)
+    }
+
+    /**
+     * Expose a function for taking tokens and returning a RegExp.
+     *
+     * @param  {Array}  tokens
+     * @param  {Array}  keys
+     * @param  {Object} options
+     * @return {RegExp}
+     */
+    function tokensToRegExp (tokens, options) {
+      options = options || {};
+
+      var strict = options.strict;
+      var end = options.end !== false;
+      var route = '';
+      var lastToken = tokens[tokens.length - 1];
+      var endsWithSlash = typeof lastToken === 'string' && /\/$/.test(lastToken);
+
+      // Iterate over the tokens and create our regexp string.
+      for (var i = 0; i < tokens.length; i++) {
+        var token = tokens[i];
+
+        if (typeof token === 'string') {
+          route += escapeString(token);
+        } else {
+          var prefix = escapeString(token.prefix);
+          var capture = token.pattern;
+
+          if (token.repeat) {
+            capture += '(?:' + prefix + capture + ')*';
+          }
+
+          if (token.optional) {
+            if (prefix) {
+              capture = '(?:' + prefix + '(' + capture + '))?';
+            } else {
+              capture = '(' + capture + ')?';
+            }
+          } else {
+            capture = prefix + '(' + capture + ')';
+          }
+
+          route += capture;
+        }
+      }
+
+      // In non-strict mode we allow a slash at the end of match. If the path to
+      // match already ends with a slash, we remove it for consistency. The slash
+      // is valid at the end of a path match, not in the middle. This is important
+      // in non-ending mode, where "/test/" shouldn't match "/test//route".
+      if (!strict) {
+        route = (endsWithSlash ? route.slice(0, -2) : route) + '(?:\\/(?=$))?';
+      }
+
+      if (end) {
+        route += '$';
+      } else {
+        // In non-ending mode, we need the capturing groups to match as much as
+        // possible by using a positive lookahead to the end or next path segment.
+        route += strict && endsWithSlash ? '' : '(?=\\/|$)';
+      }
+
+      return new RegExp('^' + route, flags(options))
+    }
+
+    /**
+     * Normalize the given path string, returning a regular expression.
+     *
+     * An empty array can be passed in for the keys, which will hold the
+     * placeholder key descriptions. For example, using `/user/:id`, `keys` will
+     * contain `[{ name: 'id', delimiter: '/', optional: false, repeat: false }]`.
+     *
+     * @param  {(String|RegExp|Array)} path
+     * @param  {Array}                 [keys]
+     * @param  {Object}                [options]
+     * @return {RegExp}
+     */
+    function pathToRegexp (path, keys, options) {
+      keys = keys || [];
+
+      if (!isarray(keys)) {
+        options = keys;
+        keys = [];
+      } else if (!options) {
+        options = {};
+      }
+
+      if (path instanceof RegExp) {
+        return regexpToRegexp(path, keys)
+      }
+
+      if (isarray(path)) {
+        return arrayToRegexp(path, keys, options)
+      }
+
+      return stringToRegexp(path, keys, options)
+    }
+
+    pathToRegexp_1.parse = parse_1;
+    pathToRegexp_1.compile = compile_1;
+    pathToRegexp_1.tokensToFunction = tokensToFunction_1;
+    pathToRegexp_1.tokensToRegExp = tokensToRegExp_1;
+
+    /**
+       * Module dependencies.
+       */
+
+      
+
+      /**
+       * Short-cuts for global-object checks
+       */
+
+      var hasDocument = ('undefined' !== typeof document);
+      var hasWindow = ('undefined' !== typeof window);
+      var hasHistory = ('undefined' !== typeof history);
+      var hasProcess = typeof process !== 'undefined';
+
+      /**
+       * Detect click event
+       */
+      var clickEvent = hasDocument && document.ontouchstart ? 'touchstart' : 'click';
+
+      /**
+       * To work properly with the URL
+       * history.location generated polyfill in https://github.com/devote/HTML5-History-API
+       */
+
+      var isLocation = hasWindow && !!(window.history.location || window.location);
+
+      /**
+       * The page instance
+       * @api private
+       */
+      function Page() {
+        // public things
+        this.callbacks = [];
+        this.exits = [];
+        this.current = '';
+        this.len = 0;
+
+        // private things
+        this._decodeURLComponents = true;
+        this._base = '';
+        this._strict = false;
+        this._running = false;
+        this._hashbang = false;
+
+        // bound functions
+        this.clickHandler = this.clickHandler.bind(this);
+        this._onpopstate = this._onpopstate.bind(this);
+      }
+
+      /**
+       * Configure the instance of page. This can be called multiple times.
+       *
+       * @param {Object} options
+       * @api public
+       */
+
+      Page.prototype.configure = function(options) {
+        var opts = options || {};
+
+        this._window = opts.window || (hasWindow && window);
+        this._decodeURLComponents = opts.decodeURLComponents !== false;
+        this._popstate = opts.popstate !== false && hasWindow;
+        this._click = opts.click !== false && hasDocument;
+        this._hashbang = !!opts.hashbang;
+
+        var _window = this._window;
+        if(this._popstate) {
+          _window.addEventListener('popstate', this._onpopstate, false);
+        } else if(hasWindow) {
+          _window.removeEventListener('popstate', this._onpopstate, false);
+        }
+
+        if (this._click) {
+          _window.document.addEventListener(clickEvent, this.clickHandler, false);
+        } else if(hasDocument) {
+          _window.document.removeEventListener(clickEvent, this.clickHandler, false);
+        }
+
+        if(this._hashbang && hasWindow && !hasHistory) {
+          _window.addEventListener('hashchange', this._onpopstate, false);
+        } else if(hasWindow) {
+          _window.removeEventListener('hashchange', this._onpopstate, false);
+        }
+      };
+
+      /**
+       * Get or set basepath to `path`.
+       *
+       * @param {string} path
+       * @api public
+       */
+
+      Page.prototype.base = function(path) {
+        if (0 === arguments.length) return this._base;
+        this._base = path;
+      };
+
+      /**
+       * Gets the `base`, which depends on whether we are using History or
+       * hashbang routing.
+
+       * @api private
+       */
+      Page.prototype._getBase = function() {
+        var base = this._base;
+        if(!!base) return base;
+        var loc = hasWindow && this._window && this._window.location;
+
+        if(hasWindow && this._hashbang && loc && loc.protocol === 'file:') {
+          base = loc.pathname;
+        }
+
+        return base;
+      };
+
+      /**
+       * Get or set strict path matching to `enable`
+       *
+       * @param {boolean} enable
+       * @api public
+       */
+
+      Page.prototype.strict = function(enable) {
+        if (0 === arguments.length) return this._strict;
+        this._strict = enable;
+      };
+
+
+      /**
+       * Bind with the given `options`.
+       *
+       * Options:
+       *
+       *    - `click` bind to click events [true]
+       *    - `popstate` bind to popstate [true]
+       *    - `dispatch` perform initial dispatch [true]
+       *
+       * @param {Object} options
+       * @api public
+       */
+
+      Page.prototype.start = function(options) {
+        var opts = options || {};
+        this.configure(opts);
+
+        if (false === opts.dispatch) return;
+        this._running = true;
+
+        var url;
+        if(isLocation) {
+          var window = this._window;
+          var loc = window.location;
+
+          if(this._hashbang && ~loc.hash.indexOf('#!')) {
+            url = loc.hash.substr(2) + loc.search;
+          } else if (this._hashbang) {
+            url = loc.search + loc.hash;
+          } else {
+            url = loc.pathname + loc.search + loc.hash;
+          }
+        }
+
+        this.replace(url, null, true, opts.dispatch);
+      };
+
+      /**
+       * Unbind click and popstate event handlers.
+       *
+       * @api public
+       */
+
+      Page.prototype.stop = function() {
+        if (!this._running) return;
+        this.current = '';
+        this.len = 0;
+        this._running = false;
+
+        var window = this._window;
+        this._click && window.document.removeEventListener(clickEvent, this.clickHandler, false);
+        hasWindow && window.removeEventListener('popstate', this._onpopstate, false);
+        hasWindow && window.removeEventListener('hashchange', this._onpopstate, false);
+      };
+
+      /**
+       * Show `path` with optional `state` object.
+       *
+       * @param {string} path
+       * @param {Object=} state
+       * @param {boolean=} dispatch
+       * @param {boolean=} push
+       * @return {!Context}
+       * @api public
+       */
+
+      Page.prototype.show = function(path, state, dispatch, push) {
+        var ctx = new Context(path, state, this),
+          prev = this.prevContext;
+        this.prevContext = ctx;
+        this.current = ctx.path;
+        if (false !== dispatch) this.dispatch(ctx, prev);
+        if (false !== ctx.handled && false !== push) ctx.pushState();
+        return ctx;
+      };
+
+      /**
+       * Goes back in the history
+       * Back should always let the current route push state and then go back.
+       *
+       * @param {string} path - fallback path to go back if no more history exists, if undefined defaults to page.base
+       * @param {Object=} state
+       * @api public
+       */
+
+      Page.prototype.back = function(path, state) {
+        var page = this;
+        if (this.len > 0) {
+          var window = this._window;
+          // this may need more testing to see if all browsers
+          // wait for the next tick to go back in history
+          hasHistory && window.history.back();
+          this.len--;
+        } else if (path) {
+          setTimeout(function() {
+            page.show(path, state);
+          });
+        } else {
+          setTimeout(function() {
+            page.show(page._getBase(), state);
+          });
+        }
+      };
+
+      /**
+       * Register route to redirect from one path to other
+       * or just redirect to another route
+       *
+       * @param {string} from - if param 'to' is undefined redirects to 'from'
+       * @param {string=} to
+       * @api public
+       */
+      Page.prototype.redirect = function(from, to) {
+        var inst = this;
+
+        // Define route from a path to another
+        if ('string' === typeof from && 'string' === typeof to) {
+          page.call(this, from, function(e) {
+            setTimeout(function() {
+              inst.replace(/** @type {!string} */ (to));
+            }, 0);
+          });
+        }
+
+        // Wait for the push state and replace it with another
+        if ('string' === typeof from && 'undefined' === typeof to) {
+          setTimeout(function() {
+            inst.replace(from);
+          }, 0);
+        }
+      };
+
+      /**
+       * Replace `path` with optional `state` object.
+       *
+       * @param {string} path
+       * @param {Object=} state
+       * @param {boolean=} init
+       * @param {boolean=} dispatch
+       * @return {!Context}
+       * @api public
+       */
+
+
+      Page.prototype.replace = function(path, state, init, dispatch) {
+        var ctx = new Context(path, state, this),
+          prev = this.prevContext;
+        this.prevContext = ctx;
+        this.current = ctx.path;
+        ctx.init = init;
+        ctx.save(); // save before dispatching, which may redirect
+        if (false !== dispatch) this.dispatch(ctx, prev);
+        return ctx;
+      };
+
+      /**
+       * Dispatch the given `ctx`.
+       *
+       * @param {Context} ctx
+       * @api private
+       */
+
+      Page.prototype.dispatch = function(ctx, prev) {
+        var i = 0, j = 0, page = this;
+
+        function nextExit() {
+          var fn = page.exits[j++];
+          if (!fn) return nextEnter();
+          fn(prev, nextExit);
+        }
+
+        function nextEnter() {
+          var fn = page.callbacks[i++];
+
+          if (ctx.path !== page.current) {
+            ctx.handled = false;
+            return;
+          }
+          if (!fn) return unhandled.call(page, ctx);
+          fn(ctx, nextEnter);
+        }
+
+        if (prev) {
+          nextExit();
+        } else {
+          nextEnter();
+        }
+      };
+
+      /**
+       * Register an exit route on `path` with
+       * callback `fn()`, which will be called
+       * on the previous context when a new
+       * page is visited.
+       */
+      Page.prototype.exit = function(path, fn) {
+        if (typeof path === 'function') {
+          return this.exit('*', path);
+        }
+
+        var route = new Route(path, null, this);
+        for (var i = 1; i < arguments.length; ++i) {
+          this.exits.push(route.middleware(arguments[i]));
+        }
+      };
+
+      /**
+       * Handle "click" events.
+       */
+
+      /* jshint +W054 */
+      Page.prototype.clickHandler = function(e) {
+        if (1 !== this._which(e)) return;
+
+        if (e.metaKey || e.ctrlKey || e.shiftKey) return;
+        if (e.defaultPrevented) return;
+
+        // ensure link
+        // use shadow dom when available if not, fall back to composedPath()
+        // for browsers that only have shady
+        var el = e.target;
+        var eventPath = e.path || (e.composedPath ? e.composedPath() : null);
+
+        if(eventPath) {
+          for (var i = 0; i < eventPath.length; i++) {
+            if (!eventPath[i].nodeName) continue;
+            if (eventPath[i].nodeName.toUpperCase() !== 'A') continue;
+            if (!eventPath[i].href) continue;
+
+            el = eventPath[i];
+            break;
+          }
+        }
+
+        // continue ensure link
+        // el.nodeName for svg links are 'a' instead of 'A'
+        while (el && 'A' !== el.nodeName.toUpperCase()) el = el.parentNode;
+        if (!el || 'A' !== el.nodeName.toUpperCase()) return;
+
+        // check if link is inside an svg
+        // in this case, both href and target are always inside an object
+        var svg = (typeof el.href === 'object') && el.href.constructor.name === 'SVGAnimatedString';
+
+        // Ignore if tag has
+        // 1. "download" attribute
+        // 2. rel="external" attribute
+        if (el.hasAttribute('download') || el.getAttribute('rel') === 'external') return;
+
+        // ensure non-hash for the same path
+        var link = el.getAttribute('href');
+        if(!this._hashbang && this._samePath(el) && (el.hash || '#' === link)) return;
+
+        // Check for mailto: in the href
+        if (link && link.indexOf('mailto:') > -1) return;
+
+        // check target
+        // svg target is an object and its desired value is in .baseVal property
+        if (svg ? el.target.baseVal : el.target) return;
+
+        // x-origin
+        // note: svg links that are not relative don't call click events (and skip page.js)
+        // consequently, all svg links tested inside page.js are relative and in the same origin
+        if (!svg && !this.sameOrigin(el.href)) return;
+
+        // rebuild path
+        // There aren't .pathname and .search properties in svg links, so we use href
+        // Also, svg href is an object and its desired value is in .baseVal property
+        var path = svg ? el.href.baseVal : (el.pathname + el.search + (el.hash || ''));
+
+        path = path[0] !== '/' ? '/' + path : path;
+
+        // strip leading "/[drive letter]:" on NW.js on Windows
+        if (hasProcess && path.match(/^\/[a-zA-Z]:\//)) {
+          path = path.replace(/^\/[a-zA-Z]:\//, '/');
+        }
+
+        // same page
+        var orig = path;
+        var pageBase = this._getBase();
+
+        if (path.indexOf(pageBase) === 0) {
+          path = path.substr(pageBase.length);
+        }
+
+        if (this._hashbang) path = path.replace('#!', '');
+
+        if (pageBase && orig === path && (!isLocation || this._window.location.protocol !== 'file:')) {
+          return;
+        }
+
+        e.preventDefault();
+        this.show(orig);
+      };
+
+      /**
+       * Handle "populate" events.
+       * @api private
+       */
+
+      Page.prototype._onpopstate = (function () {
+        var loaded = false;
+        if ( ! hasWindow ) {
+          return function () {};
+        }
+        if (hasDocument && document.readyState === 'complete') {
+          loaded = true;
+        } else {
+          window.addEventListener('load', function() {
+            setTimeout(function() {
+              loaded = true;
+            }, 0);
+          });
+        }
+        return function onpopstate(e) {
+          if (!loaded) return;
+          var page = this;
+          if (e.state) {
+            var path = e.state.path;
+            page.replace(path, e.state);
+          } else if (isLocation) {
+            var loc = page._window.location;
+            page.show(loc.pathname + loc.search + loc.hash, undefined, undefined, false);
+          }
+        };
+      })();
+
+      /**
+       * Event button.
+       */
+      Page.prototype._which = function(e) {
+        e = e || (hasWindow && this._window.event);
+        return null == e.which ? e.button : e.which;
+      };
+
+      /**
+       * Convert to a URL object
+       * @api private
+       */
+      Page.prototype._toURL = function(href) {
+        var window = this._window;
+        if(typeof URL === 'function' && isLocation) {
+          return new URL(href, window.location.toString());
+        } else if (hasDocument) {
+          var anc = window.document.createElement('a');
+          anc.href = href;
+          return anc;
+        }
+      };
+
+      /**
+       * Check if `href` is the same origin.
+       * @param {string} href
+       * @api public
+       */
+      Page.prototype.sameOrigin = function(href) {
+        if(!href || !isLocation) return false;
+
+        var url = this._toURL(href);
+        var window = this._window;
+
+        var loc = window.location;
+
+        /*
+           When the port is the default http port 80 for http, or 443 for
+           https, internet explorer 11 returns an empty string for loc.port,
+           so we need to compare loc.port with an empty string if url.port
+           is the default port 80 or 443.
+           Also the comparition with `port` is changed from `===` to `==` because
+           `port` can be a string sometimes. This only applies to ie11.
+        */
+        return loc.protocol === url.protocol &&
+          loc.hostname === url.hostname &&
+          (loc.port === url.port || loc.port === '' && (url.port == 80 || url.port == 443)); // jshint ignore:line
+      };
+
+      /**
+       * @api private
+       */
+      Page.prototype._samePath = function(url) {
+        if(!isLocation) return false;
+        var window = this._window;
+        var loc = window.location;
+        return url.pathname === loc.pathname &&
+          url.search === loc.search;
+      };
+
+      /**
+       * Remove URL encoding from the given `str`.
+       * Accommodates whitespace in both x-www-form-urlencoded
+       * and regular percent-encoded form.
+       *
+       * @param {string} val - URL component to decode
+       * @api private
+       */
+      Page.prototype._decodeURLEncodedURIComponent = function(val) {
+        if (typeof val !== 'string') { return val; }
+        return this._decodeURLComponents ? decodeURIComponent(val.replace(/\+/g, ' ')) : val;
+      };
+
+      /**
+       * Create a new `page` instance and function
+       */
+      function createPage() {
+        var pageInstance = new Page();
+
+        function pageFn(/* args */) {
+          return page.apply(pageInstance, arguments);
+        }
+
+        // Copy all of the things over. In 2.0 maybe we use setPrototypeOf
+        pageFn.callbacks = pageInstance.callbacks;
+        pageFn.exits = pageInstance.exits;
+        pageFn.base = pageInstance.base.bind(pageInstance);
+        pageFn.strict = pageInstance.strict.bind(pageInstance);
+        pageFn.start = pageInstance.start.bind(pageInstance);
+        pageFn.stop = pageInstance.stop.bind(pageInstance);
+        pageFn.show = pageInstance.show.bind(pageInstance);
+        pageFn.back = pageInstance.back.bind(pageInstance);
+        pageFn.redirect = pageInstance.redirect.bind(pageInstance);
+        pageFn.replace = pageInstance.replace.bind(pageInstance);
+        pageFn.dispatch = pageInstance.dispatch.bind(pageInstance);
+        pageFn.exit = pageInstance.exit.bind(pageInstance);
+        pageFn.configure = pageInstance.configure.bind(pageInstance);
+        pageFn.sameOrigin = pageInstance.sameOrigin.bind(pageInstance);
+        pageFn.clickHandler = pageInstance.clickHandler.bind(pageInstance);
+
+        pageFn.create = createPage;
+
+        Object.defineProperty(pageFn, 'len', {
+          get: function(){
+            return pageInstance.len;
+          },
+          set: function(val) {
+            pageInstance.len = val;
+          }
+        });
+
+        Object.defineProperty(pageFn, 'current', {
+          get: function(){
+            return pageInstance.current;
+          },
+          set: function(val) {
+            pageInstance.current = val;
+          }
+        });
+
+        // In 2.0 these can be named exports
+        pageFn.Context = Context;
+        pageFn.Route = Route;
+
+        return pageFn;
+      }
+
+      /**
+       * Register `path` with callback `fn()`,
+       * or route `path`, or redirection,
+       * or `page.start()`.
+       *
+       *   page(fn);
+       *   page('*', fn);
+       *   page('/user/:id', load, user);
+       *   page('/user/' + user.id, { some: 'thing' });
+       *   page('/user/' + user.id);
+       *   page('/from', '/to')
+       *   page();
+       *
+       * @param {string|!Function|!Object} path
+       * @param {Function=} fn
+       * @api public
+       */
+
+      function page(path, fn) {
+        // <callback>
+        if ('function' === typeof path) {
+          return page.call(this, '*', path);
+        }
+
+        // route <path> to <callback ...>
+        if ('function' === typeof fn) {
+          var route = new Route(/** @type {string} */ (path), null, this);
+          for (var i = 1; i < arguments.length; ++i) {
+            this.callbacks.push(route.middleware(arguments[i]));
+          }
+          // show <path> with [state]
+        } else if ('string' === typeof path) {
+          this['string' === typeof fn ? 'redirect' : 'show'](path, fn);
+          // start [options]
+        } else {
+          this.start(path);
+        }
+      }
+
+      /**
+       * Unhandled `ctx`. When it's not the initial
+       * popstate then redirect. If you wish to handle
+       * 404s on your own use `page('*', callback)`.
+       *
+       * @param {Context} ctx
+       * @api private
+       */
+      function unhandled(ctx) {
+        if (ctx.handled) return;
+        var current;
+        var page = this;
+        var window = page._window;
+
+        if (page._hashbang) {
+          current = isLocation && this._getBase() + window.location.hash.replace('#!', '');
+        } else {
+          current = isLocation && window.location.pathname + window.location.search;
+        }
+
+        if (current === ctx.canonicalPath) return;
+        page.stop();
+        ctx.handled = false;
+        isLocation && (window.location.href = ctx.canonicalPath);
+      }
+
+      /**
+       * Escapes RegExp characters in the given string.
+       *
+       * @param {string} s
+       * @api private
+       */
+      function escapeRegExp(s) {
+        return s.replace(/([.+*?=^!:${}()[\]|/\\])/g, '\\$1');
+      }
+
+      /**
+       * Initialize a new "request" `Context`
+       * with the given `path` and optional initial `state`.
+       *
+       * @constructor
+       * @param {string} path
+       * @param {Object=} state
+       * @api public
+       */
+
+      function Context(path, state, pageInstance) {
+        var _page = this.page = pageInstance || page;
+        var window = _page._window;
+        var hashbang = _page._hashbang;
+
+        var pageBase = _page._getBase();
+        if ('/' === path[0] && 0 !== path.indexOf(pageBase)) path = pageBase + (hashbang ? '#!' : '') + path;
+        var i = path.indexOf('?');
+
+        this.canonicalPath = path;
+        var re = new RegExp('^' + escapeRegExp(pageBase));
+        this.path = path.replace(re, '') || '/';
+        if (hashbang) this.path = this.path.replace('#!', '') || '/';
+
+        this.title = (hasDocument && window.document.title);
+        this.state = state || {};
+        this.state.path = path;
+        this.querystring = ~i ? _page._decodeURLEncodedURIComponent(path.slice(i + 1)) : '';
+        this.pathname = _page._decodeURLEncodedURIComponent(~i ? path.slice(0, i) : path);
+        this.params = {};
+
+        // fragment
+        this.hash = '';
+        if (!hashbang) {
+          if (!~this.path.indexOf('#')) return;
+          var parts = this.path.split('#');
+          this.path = this.pathname = parts[0];
+          this.hash = _page._decodeURLEncodedURIComponent(parts[1]) || '';
+          this.querystring = this.querystring.split('#')[0];
+        }
+      }
+
+      /**
+       * Push state.
+       *
+       * @api private
+       */
+
+      Context.prototype.pushState = function() {
+        var page = this.page;
+        var window = page._window;
+        var hashbang = page._hashbang;
+
+        page.len++;
+        if (hasHistory) {
+            window.history.pushState(this.state, this.title,
+              hashbang && this.path !== '/' ? '#!' + this.path : this.canonicalPath);
+        }
+      };
+
+      /**
+       * Save the context state.
+       *
+       * @api public
+       */
+
+      Context.prototype.save = function() {
+        var page = this.page;
+        if (hasHistory) {
+            page._window.history.replaceState(this.state, this.title,
+              page._hashbang && this.path !== '/' ? '#!' + this.path : this.canonicalPath);
+        }
+      };
+
+      /**
+       * Initialize `Route` with the given HTTP `path`,
+       * and an array of `callbacks` and `options`.
+       *
+       * Options:
+       *
+       *   - `sensitive`    enable case-sensitive routes
+       *   - `strict`       enable strict matching for trailing slashes
+       *
+       * @constructor
+       * @param {string} path
+       * @param {Object=} options
+       * @api private
+       */
+
+      function Route(path, options, page) {
+        var _page = this.page = page || globalPage;
+        var opts = options || {};
+        opts.strict = opts.strict || _page._strict;
+        this.path = (path === '*') ? '(.*)' : path;
+        this.method = 'GET';
+        this.regexp = pathToRegexp_1(this.path, this.keys = [], opts);
+      }
+
+      /**
+       * Return route middleware with
+       * the given callback `fn()`.
+       *
+       * @param {Function} fn
+       * @return {Function}
+       * @api public
+       */
+
+      Route.prototype.middleware = function(fn) {
+        var self = this;
+        return function(ctx, next) {
+          if (self.match(ctx.path, ctx.params)) {
+            ctx.routePath = self.path;
+            return fn(ctx, next);
+          }
+          next();
+        };
+      };
+
+      /**
+       * Check if this route matches `path`, if so
+       * populate `params`.
+       *
+       * @param {string} path
+       * @param {Object} params
+       * @return {boolean}
+       * @api private
+       */
+
+      Route.prototype.match = function(path, params) {
+        var keys = this.keys,
+          qsIndex = path.indexOf('?'),
+          pathname = ~qsIndex ? path.slice(0, qsIndex) : path,
+          m = this.regexp.exec(decodeURIComponent(pathname));
+
+        if (!m) return false;
+
+        delete params[0];
+
+        for (var i = 1, len = m.length; i < len; ++i) {
+          var key = keys[i - 1];
+          var val = this.page._decodeURLEncodedURIComponent(m[i]);
+          if (val !== undefined || !(hasOwnProperty.call(params, key.name))) {
+            params[key.name] = val;
+          }
+        }
+
+        return true;
+      };
+
+
+      /**
+       * Module exports.
+       */
+
+      var globalPage = createPage();
+      var page_js = globalPage;
+      var default_1 = globalPage;
+
+    page_js.default = default_1;
+
+    return page_js;
+
+    })));
+    });
+
     /* src\components\Modal.svelte generated by Svelte v3.46.4 */
 
-    function create_fragment$7(ctx) {
+    function create_fragment$a(ctx) {
     	let current;
     	const default_slot_template = /*#slots*/ ctx[1].default;
     	const default_slot = create_slot(default_slot_template, ctx, /*$$scope*/ ctx[0], null);
@@ -524,7 +1767,7 @@ var app = (function () {
 
     	dispatch_dev("SvelteRegisterBlock", {
     		block,
-    		id: create_fragment$7.name,
+    		id: create_fragment$a.name,
     		type: "component",
     		source: "",
     		ctx
@@ -533,7 +1776,7 @@ var app = (function () {
     	return block;
     }
 
-    function instance$7($$self, $$props, $$invalidate) {
+    function instance$a($$self, $$props, $$invalidate) {
     	let { $$slots: slots = {}, $$scope } = $$props;
     	validate_slots('Modal', slots, ['default']);
     	const writable_props = [];
@@ -552,19 +1795,19 @@ var app = (function () {
     class Modal extends SvelteComponentDev {
     	constructor(options) {
     		super(options);
-    		init(this, options, instance$7, create_fragment$7, safe_not_equal, {});
+    		init$1(this, options, instance$a, create_fragment$a, safe_not_equal, {});
 
     		dispatch_dev("SvelteRegisterComponent", {
     			component: this,
     			tagName: "Modal",
     			options,
-    			id: create_fragment$7.name
+    			id: create_fragment$a.name
     		});
     	}
     }
 
     /* src\components\CharityList.svelte generated by Svelte v3.46.4 */
-    const file$4 = "src\\components\\CharityList.svelte";
+    const file$7 = "src\\components\\CharityList.svelte";
 
     function get_each_context(ctx, list, i) {
     	const child_ctx = ctx.slice();
@@ -573,7 +1816,7 @@ var app = (function () {
     }
 
     // (55:8) {#if charities !== undefined}
-    function create_if_block(ctx) {
+    function create_if_block$1(ctx) {
     	let each_1_anchor;
     	let current;
     	let each_value = /*charities*/ ctx[0];
@@ -605,7 +1848,7 @@ var app = (function () {
     			current = true;
     		},
     		p: function update(ctx, dirty) {
-    			if (dirty & /*handleButton, charities, calculateDaysRemaining, calculateFunded, formatCurrency, handleCloseModal, isModalOpen*/ 15) {
+    			if (dirty & /*charities, calculateDaysRemaining, calculateFunded, formatCurrency, handleCloseModal, isModalOpen*/ 7) {
     				each_value = /*charities*/ ctx[0];
     				validate_each_argument(each_value);
     				let i;
@@ -659,7 +1902,7 @@ var app = (function () {
 
     	dispatch_dev("SvelteRegisterBlock", {
     		block,
-    		id: create_if_block.name,
+    		id: create_if_block$1.name,
     		type: "if",
     		source: "(55:8) {#if charities !== undefined}",
     		ctx
@@ -811,79 +2054,79 @@ var app = (function () {
     			div10 = element("div");
     			attr_dev(h5, "class", "modal-title");
     			attr_dev(h5, "id", "exampleModalLabel");
-    			add_location(h5, file$4, 68, 28, 2145);
+    			add_location(h5, file$7, 68, 28, 2145);
     			attr_dev(span, "aria-hidden", "true");
-    			add_location(span, file$4, 76, 32, 2559);
+    			add_location(span, file$7, 76, 32, 2559);
     			attr_dev(button0, "type", "button");
     			attr_dev(button0, "class", "close");
     			attr_dev(button0, "data-dismiss", "modal");
     			attr_dev(button0, "aria-label", "Close");
-    			add_location(button0, file$4, 69, 28, 2242);
+    			add_location(button0, file$7, 69, 28, 2242);
     			attr_dev(div0, "class", "modal-header");
-    			add_location(div0, file$4, 67, 24, 2089);
+    			add_location(div0, file$7, 67, 24, 2089);
     			attr_dev(label0, "for", "exampleInputAmount");
-    			add_location(label0, file$4, 82, 36, 2851);
+    			add_location(label0, file$7, 82, 36, 2851);
     			input0.required = true;
     			attr_dev(input0, "type", "number");
     			attr_dev(input0, "class", "form-control");
     			attr_dev(input0, "id", "exampleInputAmount");
     			attr_dev(input0, "aria-describedby", "amountHelp");
     			attr_dev(input0, "placeholder", "Enter amount");
-    			add_location(input0, file$4, 83, 36, 2944);
+    			add_location(input0, file$7, 83, 36, 2944);
     			attr_dev(div1, "class", "form-group");
-    			add_location(div1, file$4, 81, 32, 2789);
+    			add_location(div1, file$7, 81, 32, 2789);
     			attr_dev(label1, "for", "exampleInputName");
-    			add_location(label1, file$4, 87, 36, 3253);
+    			add_location(label1, file$7, 87, 36, 3253);
     			input1.required = true;
     			attr_dev(input1, "type", "text");
     			attr_dev(input1, "class", "form-control");
     			attr_dev(input1, "id", "exampleInputName");
     			attr_dev(input1, "aria-describedby", "nameHelp");
     			attr_dev(input1, "placeholder", "Enter full name");
-    			add_location(input1, file$4, 88, 36, 3338);
+    			add_location(input1, file$7, 88, 36, 3338);
     			attr_dev(div2, "class", "form-group");
-    			add_location(div2, file$4, 86, 32, 3191);
+    			add_location(div2, file$7, 86, 32, 3191);
     			attr_dev(label2, "for", "exampleInputEmail1");
-    			add_location(label2, file$4, 92, 36, 3644);
+    			add_location(label2, file$7, 92, 36, 3644);
     			input2.required = true;
     			attr_dev(input2, "type", "email");
     			attr_dev(input2, "class", "form-control");
     			attr_dev(input2, "id", "exampleInputEmail1");
     			attr_dev(input2, "aria-describedby", "emailHelp");
     			attr_dev(input2, "placeholder", "Enter email");
-    			add_location(input2, file$4, 93, 36, 3735);
+    			add_location(input2, file$7, 93, 36, 3735);
     			attr_dev(div3, "class", "form-group");
-    			add_location(div3, file$4, 91, 32, 3582);
+    			add_location(div3, file$7, 91, 32, 3582);
     			attr_dev(input3, "type", "checkbox");
     			attr_dev(input3, "class", "form-check-input");
     			attr_dev(input3, "id", "exampleCheck1");
-    			add_location(input3, file$4, 97, 36, 4041);
+    			add_location(input3, file$7, 97, 36, 4041);
     			attr_dev(label3, "class", "form-check-label");
     			attr_dev(label3, "for", "exampleCheck1");
-    			add_location(label3, file$4, 98, 36, 4146);
+    			add_location(label3, file$7, 98, 36, 4146);
     			attr_dev(div4, "class", "form-check");
-    			add_location(div4, file$4, 96, 32, 3979);
-    			add_location(form, file$4, 80, 28, 2749);
+    			add_location(div4, file$7, 96, 32, 3979);
+    			add_location(form, file$7, 80, 28, 2749);
     			attr_dev(div5, "class", "modal-body");
-    			add_location(div5, file$4, 79, 24, 2695);
+    			add_location(div5, file$7, 79, 24, 2695);
     			attr_dev(button1, "type", "button");
     			attr_dev(button1, "class", "btn btn-primary");
-    			add_location(button1, file$4, 103, 28, 4404);
+    			add_location(button1, file$7, 103, 28, 4404);
     			attr_dev(div6, "class", "modal-footer");
-    			add_location(div6, file$4, 102, 24, 4348);
+    			add_location(div6, file$7, 102, 24, 4348);
     			attr_dev(div7, "class", "modal-content");
-    			add_location(div7, file$4, 66, 20, 2036);
+    			add_location(div7, file$7, 66, 20, 2036);
     			attr_dev(div8, "class", "modal-dialog");
     			attr_dev(div8, "role", "document");
-    			add_location(div8, file$4, 65, 16, 1972);
+    			add_location(div8, file$7, 65, 16, 1972);
     			attr_dev(div9, "class", "modal fade show svelte-phmkyf");
     			attr_dev(div9, "id", "exampleModal");
     			attr_dev(div9, "tabindex", "-1");
     			attr_dev(div9, "role", "dialog");
     			attr_dev(div9, "aria-labelledby", "exampleModalLabel");
-    			add_location(div9, file$4, 63, 16, 1826);
+    			add_location(div9, file$7, 63, 16, 1826);
     			attr_dev(div10, "class", "xs-popular-item xs-box-shadow");
-    			add_location(div10, file$4, 108, 12, 4585);
+    			add_location(div10, file$7, 108, 12, 4585);
     		},
     		m: function mount(target, anchor) {
     			insert_dev(target, div9, anchor);
@@ -924,7 +2167,7 @@ var app = (function () {
     			insert_dev(target, div10, anchor);
 
     			if (!mounted) {
-    				dispose = listen_dev(button0, "click", /*handleCloseModal*/ ctx[3], false, false, false);
+    				dispose = listen_dev(button0, "click", /*handleCloseModal*/ ctx[2], false, false, false);
     				mounted = true;
     			}
     		},
@@ -1013,11 +2256,11 @@ var app = (function () {
     	let t23;
     	let span7;
     	let t24;
-    	let button;
+    	let a3;
+    	let t25;
+    	let a3_href_value;
     	let t26;
     	let current;
-    	let mounted;
-    	let dispose;
     	let if_block = /*isModalOpen*/ ctx[1] === true && create_if_block_1(ctx);
 
     	const block = {
@@ -1078,71 +2321,72 @@ var app = (function () {
     			t23 = space();
     			span7 = element("span");
     			t24 = space();
-    			button = element("button");
-    			button.textContent = "Donate This Cause";
+    			a3 = element("a");
+    			t25 = text("Donate This Cause");
     			t26 = space();
     			if (!src_url_equal(img0.src, img0_src_value = "assets/images/causes/causes_4.png")) attr_dev(img0, "src", img0_src_value);
     			attr_dev(img0, "alt", "");
-    			add_location(img0, file$4, 116, 24, 4816);
+    			add_location(img0, file$7, 116, 24, 4816);
     			attr_dev(span0, "class", "number-percentage-count number-percentage");
     			attr_dev(span0, "data-value", "90");
     			attr_dev(span0, "data-animation-duration", "3500");
-    			add_location(span0, file$4, 123, 35, 5067);
-    			add_location(p, file$4, 123, 32, 5064);
+    			add_location(span0, file$7, 123, 35, 5067);
+    			add_location(p, file$7, 123, 32, 5064);
     			attr_dev(div0, "class", "xs-skill-track");
-    			add_location(div0, file$4, 120, 28, 4974);
+    			add_location(div0, file$7, 120, 28, 4974);
     			attr_dev(div1, "class", "xs-skill-bar");
-    			add_location(div1, file$4, 119, 24, 4918);
+    			add_location(div1, file$7, 119, 24, 4918);
     			attr_dev(div2, "class", "xs-item-header");
-    			add_location(div2, file$4, 114, 20, 4760);
+    			add_location(div2, file$7, 114, 20, 4760);
     			attr_dev(a0, "href", "");
-    			add_location(a0, file$4, 135, 32, 5765);
-    			add_location(li0, file$4, 135, 28, 5761);
+    			add_location(a0, file$7, 135, 32, 5765);
+    			add_location(li0, file$7, 135, 28, 5761);
     			attr_dev(ul0, "class", "xs-simple-tag xs-mb-20");
-    			add_location(ul0, file$4, 133, 24, 5621);
+    			add_location(ul0, file$7, 133, 24, 5621);
     			attr_dev(a1, "href", "#");
     			attr_dev(a1, "class", "xs-post-title xs-mb-30");
-    			add_location(a1, file$4, 139, 24, 5933);
-    			add_location(span1, file$4, 144, 65, 6179);
-    			add_location(li1, file$4, 144, 28, 6142);
+    			add_location(a1, file$7, 139, 24, 5933);
+    			add_location(span1, file$7, 144, 65, 6179);
+    			add_location(li1, file$7, 144, 28, 6142);
     			attr_dev(span2, "class", "number-percentage-count number-percentage");
     			attr_dev(span2, "data-value", "90");
     			attr_dev(span2, "data-animation-duration", "3500");
-    			add_location(span2, file$4, 145, 32, 6238);
-    			add_location(span3, file$4, 151, 28, 6593);
-    			add_location(li2, file$4, 145, 28, 6234);
-    			add_location(span4, file$4, 154, 74, 6761);
-    			add_location(li3, file$4, 154, 28, 6715);
+    			add_location(span2, file$7, 145, 32, 6238);
+    			add_location(span3, file$7, 151, 28, 6593);
+    			add_location(li2, file$7, 145, 28, 6234);
+    			add_location(span4, file$7, 154, 74, 6761);
+    			add_location(li3, file$7, 154, 28, 6715);
     			attr_dev(ul1, "class", "xs-list-with-content svelte-phmkyf");
-    			add_location(ul1, file$4, 143, 24, 6079);
+    			add_location(ul1, file$7, 143, 24, 6079);
     			attr_dev(span5, "class", "xs-separetor");
-    			add_location(span5, file$4, 157, 24, 6848);
+    			add_location(span5, file$7, 157, 24, 6848);
     			if (!src_url_equal(img1.src, img1_src_value = "assets/images/avatar/avatar_1.jpg")) attr_dev(img1, "src", img1_src_value);
     			attr_dev(img1, "alt", "");
-    			add_location(img1, file$4, 161, 32, 7032);
+    			add_location(img1, file$7, 161, 32, 7032);
     			attr_dev(div3, "class", "xs-round-avatar");
-    			add_location(div3, file$4, 160, 28, 6969);
-    			add_location(span6, file$4, 165, 44, 7304);
+    			add_location(div3, file$7, 160, 28, 6969);
+    			add_location(span6, file$7, 165, 44, 7304);
     			attr_dev(a2, "href", "#");
-    			add_location(a2, file$4, 165, 32, 7292);
+    			add_location(a2, file$7, 165, 32, 7292);
     			attr_dev(div4, "class", "xs-avatar-title");
-    			add_location(div4, file$4, 163, 28, 7150);
+    			add_location(div4, file$7, 163, 28, 7150);
     			attr_dev(div5, "class", "row xs-margin-0");
-    			add_location(div5, file$4, 159, 24, 6910);
+    			add_location(div5, file$7, 159, 24, 6910);
     			attr_dev(span7, "class", "xs-separetor");
-    			add_location(span7, file$4, 169, 24, 7441);
-    			attr_dev(button, "data-toggle", "modal");
-    			attr_dev(button, "data-target", "#exampleModal");
-    			attr_dev(button, "class", "btn btn-primary btn-block");
-    			add_location(button, file$4, 172, 24, 7574);
+    			add_location(span7, file$7, 169, 24, 7441);
+    			attr_dev(a3, "href", a3_href_value = "/donation/" + /*charity*/ ctx[4].id);
+    			attr_dev(a3, "data-toggle", "modal");
+    			attr_dev(a3, "data-target", "#exampleModal");
+    			attr_dev(a3, "class", "btn btn-primary btn-block");
+    			add_location(a3, file$7, 172, 24, 7574);
     			attr_dev(div6, "class", "xs-item-content");
-    			add_location(div6, file$4, 132, 20, 5566);
+    			add_location(div6, file$7, 132, 20, 5566);
     			attr_dev(div7, "class", "xs-popular-item xs-box-shadow");
-    			add_location(div7, file$4, 113, 16, 4695);
+    			add_location(div7, file$7, 113, 16, 4695);
     			attr_dev(div8, "class", "col-lg-4 col-md-6");
-    			add_location(div8, file$4, 57, 12, 1609);
+    			add_location(div8, file$7, 57, 12, 1609);
     			attr_dev(div9, "class", "row");
-    			add_location(div9, file$4, 56, 8, 1578);
+    			add_location(div9, file$7, 56, 8, 1578);
     		},
     		m: function mount(target, anchor) {
     			insert_dev(target, div9, anchor);
@@ -1197,14 +2441,10 @@ var app = (function () {
     			append_dev(div6, t23);
     			append_dev(div6, span7);
     			append_dev(div6, t24);
-    			append_dev(div6, button);
+    			append_dev(div6, a3);
+    			append_dev(a3, t25);
     			append_dev(div9, t26);
     			current = true;
-
-    			if (!mounted) {
-    				dispose = listen_dev(button, "click", /*handleButton*/ ctx[2], false, false, false);
-    				mounted = true;
-    			}
     		},
     		p: function update(ctx, dirty) {
     			if (/*isModalOpen*/ ctx[1] === true) {
@@ -1237,6 +2477,10 @@ var app = (function () {
     			if ((!current || dirty & /*charities*/ 1) && t12_value !== (t12_value = calculateFunded(/*charity*/ ctx[4].pledged, /*charity*/ ctx[4].target) + "")) set_data_dev(t12, t12_value);
     			if ((!current || dirty & /*charities*/ 1) && t16_value !== (t16_value = calculateDaysRemaining(/*charity*/ ctx[4].date_end) + "")) set_data_dev(t16, t16_value);
     			if ((!current || dirty & /*charities*/ 1) && t22_value !== (t22_value = /*charity*/ ctx[4].profile_name + "")) set_data_dev(t22, t22_value);
+
+    			if (!current || dirty & /*charities*/ 1 && a3_href_value !== (a3_href_value = "/donation/" + /*charity*/ ctx[4].id)) {
+    				attr_dev(a3, "href", a3_href_value);
+    			}
     		},
     		i: function intro(local) {
     			if (current) return;
@@ -1250,8 +2494,6 @@ var app = (function () {
     		d: function destroy(detaching) {
     			if (detaching) detach_dev(div9);
     			if (if_block) if_block.d();
-    			mounted = false;
-    			dispose();
     		}
     	};
 
@@ -1266,7 +2508,7 @@ var app = (function () {
     	return block;
     }
 
-    function create_fragment$6(ctx) {
+    function create_fragment$9(ctx) {
     	let section;
     	let div2;
     	let div1;
@@ -1281,7 +2523,7 @@ var app = (function () {
     	let t4;
     	let t5;
     	let current;
-    	let if_block = /*charities*/ ctx[0] !== undefined && create_if_block(ctx);
+    	let if_block = /*charities*/ ctx[0] !== undefined && create_if_block$1(ctx);
 
     	const block = {
     		c: function create() {
@@ -1301,20 +2543,20 @@ var app = (function () {
     			t5 = space();
     			if (if_block) if_block.c();
     			attr_dev(h2, "class", "xs-title");
-    			add_location(h2, file$4, 48, 16, 1144);
+    			add_location(h2, file$7, 48, 16, 1144);
     			attr_dev(span, "class", "xs-separetor dashed");
-    			add_location(span, file$4, 49, 16, 1202);
-    			add_location(br, file$4, 50, 97, 1342);
-    			add_location(p, file$4, 50, 16, 1261);
+    			add_location(span, file$7, 49, 16, 1202);
+    			add_location(br, file$7, 50, 97, 1342);
+    			add_location(p, file$7, 50, 16, 1261);
     			attr_dev(div0, "class", "col-md-9 col-xl-9");
-    			add_location(div0, file$4, 47, 12, 1095);
+    			add_location(div0, file$7, 47, 12, 1095);
     			attr_dev(div1, "class", "xs-heading row xs-mb-60");
-    			add_location(div1, file$4, 46, 8, 1044);
+    			add_location(div1, file$7, 46, 8, 1044);
     			attr_dev(div2, "class", "container");
-    			add_location(div2, file$4, 45, 4, 1011);
+    			add_location(div2, file$7, 45, 4, 1011);
     			attr_dev(section, "id", "popularcause");
     			attr_dev(section, "class", "bg-gray waypoint-tigger xs-section-padding");
-    			add_location(section, file$4, 44, 0, 927);
+    			add_location(section, file$7, 44, 0, 927);
     		},
     		l: function claim(nodes) {
     			throw new Error("options.hydrate only works if the component was compiled with the `hydratable: true` option");
@@ -1345,7 +2587,7 @@ var app = (function () {
     						transition_in(if_block, 1);
     					}
     				} else {
-    					if_block = create_if_block(ctx);
+    					if_block = create_if_block$1(ctx);
     					if_block.c();
     					transition_in(if_block, 1);
     					if_block.m(div2, null);
@@ -1377,7 +2619,7 @@ var app = (function () {
 
     	dispatch_dev("SvelteRegisterBlock", {
     		block,
-    		id: create_fragment$6.name,
+    		id: create_fragment$9.name,
     		type: "component",
     		source: "",
     		ctx
@@ -1400,7 +2642,7 @@ var app = (function () {
     	return Math.round(Math.abs(delta / oneDay));
     }
 
-    function instance$6($$self, $$props, $$invalidate) {
+    function instance$9($$self, $$props, $$invalidate) {
     	let { $$slots: slots = {}, $$scope } = $$props;
     	validate_slots('CharityList', slots, []);
     	let { charities } = $$props;
@@ -1444,19 +2686,19 @@ var app = (function () {
     		$$self.$inject_state($$props.$$inject);
     	}
 
-    	return [charities, isModalOpen, handleButton, handleCloseModal];
+    	return [charities, isModalOpen, handleCloseModal];
     }
 
     class CharityList extends SvelteComponentDev {
     	constructor(options) {
     		super(options);
-    		init(this, options, instance$6, create_fragment$6, safe_not_equal, { charities: 0 });
+    		init$1(this, options, instance$9, create_fragment$9, safe_not_equal, { charities: 0 });
 
     		dispatch_dev("SvelteRegisterComponent", {
     			component: this,
     			tagName: "CharityList",
     			options,
-    			id: create_fragment$6.name
+    			id: create_fragment$9.name
     		});
 
     		const { ctx } = this.$$;
@@ -1478,9 +2720,9 @@ var app = (function () {
 
     /* src\components\Header.svelte generated by Svelte v3.46.4 */
 
-    const file$3 = "src\\components\\Header.svelte";
+    const file$6 = "src\\components\\Header.svelte";
 
-    function create_fragment$5(ctx) {
+    function create_fragment$8(ctx) {
     	let header;
     	let div6;
     	let nav;
@@ -1550,53 +2792,53 @@ var app = (function () {
     			i = element("i");
     			t9 = text(" Donate Now");
     			attr_dev(div0, "class", "nav-toggle");
-    			add_location(div0, file$3, 5, 16, 187);
-    			if (!src_url_equal(img0.src, img0_src_value = "assets/images/logo.png")) attr_dev(img0, "src", img0_src_value);
+    			add_location(div0, file$6, 5, 16, 187);
+    			if (!src_url_equal(img0.src, img0_src_value = "/assets/images/logo.png")) attr_dev(img0, "src", img0_src_value);
     			attr_dev(img0, "alt", "");
-    			add_location(img0, file$3, 7, 20, 295);
-    			attr_dev(a0, "href", "index.html");
+    			add_location(img0, file$6, 7, 20, 286);
+    			attr_dev(a0, "href", "/");
     			attr_dev(a0, "class", "nav-logo");
-    			add_location(a0, file$3, 6, 16, 235);
+    			add_location(a0, file$6, 6, 16, 235);
     			attr_dev(div1, "class", "nav-header");
-    			add_location(div1, file$3, 4, 12, 145);
-    			if (!src_url_equal(img1.src, img1_src_value = "assets/images/logo.png")) attr_dev(img1, "src", img1_src_value);
+    			add_location(div1, file$6, 4, 12, 145);
+    			if (!src_url_equal(img1.src, img1_src_value = "/assets/images/logo.png")) attr_dev(img1, "src", img1_src_value);
     			attr_dev(img1, "alt", "");
-    			add_location(img1, file$3, 14, 24, 628);
+    			add_location(img1, file$6, 14, 24, 611);
     			attr_dev(a1, "class", "nav-brand");
-    			attr_dev(a1, "href", "index.html");
-    			add_location(a1, file$3, 13, 20, 563);
+    			attr_dev(a1, "href", "/");
+    			add_location(a1, file$6, 13, 20, 555);
     			attr_dev(div2, "class", "xs-logo-wraper col-lg-2 xs-padding-0");
-    			add_location(div2, file$3, 12, 16, 491);
-    			attr_dev(a2, "href", "index.html");
-    			add_location(a2, file$3, 19, 28, 860);
-    			add_location(li0, file$3, 19, 24, 856);
-    			attr_dev(a3, "href", "about.html");
-    			add_location(a3, file$3, 20, 28, 924);
-    			add_location(li1, file$3, 20, 24, 920);
-    			attr_dev(a4, "href", "contact.html");
-    			add_location(a4, file$3, 21, 28, 989);
-    			add_location(li2, file$3, 21, 24, 985);
+    			add_location(div2, file$6, 12, 16, 483);
+    			attr_dev(a2, "href", "/");
+    			add_location(a2, file$6, 19, 28, 844);
+    			add_location(li0, file$6, 19, 24, 840);
+    			attr_dev(a3, "href", "about");
+    			add_location(a3, file$6, 20, 28, 899);
+    			add_location(li1, file$6, 20, 24, 895);
+    			attr_dev(a4, "href", "contact");
+    			add_location(a4, file$6, 21, 28, 959);
+    			add_location(li2, file$6, 21, 24, 955);
     			attr_dev(ul, "class", "nav-menu");
-    			add_location(ul, file$3, 18, 20, 809);
+    			add_location(ul, file$6, 18, 20, 793);
     			attr_dev(div3, "class", "col-lg-7");
-    			add_location(div3, file$3, 17, 16, 765);
+    			add_location(div3, file$6, 17, 16, 749);
     			attr_dev(i, "class", "fa fa-heart");
-    			add_location(i, file$3, 26, 44, 1290);
+    			add_location(i, file$6, 26, 44, 1255);
     			attr_dev(span, "class", "badge");
-    			add_location(span, file$3, 26, 24, 1270);
+    			add_location(span, file$6, 26, 24, 1235);
     			attr_dev(a5, "href", "#popularcause");
     			attr_dev(a5, "class", "btn btn-primary");
-    			add_location(a5, file$3, 25, 20, 1196);
+    			add_location(a5, file$6, 25, 20, 1161);
     			attr_dev(div4, "class", "xs-navs-button d-flex-center-end col-lg-3");
-    			add_location(div4, file$3, 24, 16, 1119);
+    			add_location(div4, file$6, 24, 16, 1084);
     			attr_dev(div5, "class", "nav-menus-wrapper row");
-    			add_location(div5, file$3, 11, 12, 438);
+    			add_location(div5, file$6, 11, 12, 430);
     			attr_dev(nav, "class", "xs-menus");
-    			add_location(nav, file$3, 3, 8, 109);
+    			add_location(nav, file$6, 3, 8, 109);
     			attr_dev(div6, "class", "container");
-    			add_location(div6, file$3, 2, 4, 76);
+    			add_location(div6, file$6, 2, 4, 76);
     			attr_dev(header, "class", "xs-header header-transparent");
-    			add_location(header, file$3, 1, 0, 25);
+    			add_location(header, file$6, 1, 0, 25);
     		},
     		l: function claim(nodes) {
     			throw new Error("options.hydrate only works if the component was compiled with the `hydratable: true` option");
@@ -1643,7 +2885,7 @@ var app = (function () {
 
     	dispatch_dev("SvelteRegisterBlock", {
     		block,
-    		id: create_fragment$5.name,
+    		id: create_fragment$8.name,
     		type: "component",
     		source: "",
     		ctx
@@ -1652,7 +2894,7 @@ var app = (function () {
     	return block;
     }
 
-    function instance$5($$self, $$props) {
+    function instance$8($$self, $$props) {
     	let { $$slots: slots = {}, $$scope } = $$props;
     	validate_slots('Header', slots, []);
     	const writable_props = [];
@@ -1667,22 +2909,22 @@ var app = (function () {
     class Header extends SvelteComponentDev {
     	constructor(options) {
     		super(options);
-    		init(this, options, instance$5, create_fragment$5, safe_not_equal, {});
+    		init$1(this, options, instance$8, create_fragment$8, safe_not_equal, {});
 
     		dispatch_dev("SvelteRegisterComponent", {
     			component: this,
     			tagName: "Header",
     			options,
-    			id: create_fragment$5.name
+    			id: create_fragment$8.name
     		});
     	}
     }
 
     /* src\components\Welcome.svelte generated by Svelte v3.46.4 */
 
-    const file$2 = "src\\components\\Welcome.svelte";
+    const file$5 = "src\\components\\Welcome.svelte";
 
-    function create_fragment$4(ctx) {
+    function create_fragment$7(ctx) {
     	let section;
     	let div12;
     	let div3;
@@ -1778,55 +3020,53 @@ var app = (function () {
     			a2.textContent = "View Causes";
     			t22 = space();
     			div10 = element("div");
-    			add_location(h20, file$2, 6, 20, 328);
-    			add_location(br0, file$2, 7, 92, 459);
-    			add_location(p0, file$2, 7, 20, 387);
+    			add_location(h20, file$5, 6, 20, 264);
+    			add_location(br0, file$5, 7, 92, 395);
+    			add_location(p0, file$5, 7, 20, 323);
     			attr_dev(a0, "href", "#popularcause");
     			attr_dev(a0, "class", "btn btn-outline-primary");
-    			add_location(a0, file$2, 9, 20, 547);
+    			add_location(a0, file$5, 9, 20, 483);
     			attr_dev(div0, "class", "xs-welcome-wraper color-white");
-    			add_location(div0, file$2, 5, 16, 263);
+    			add_location(div0, file$5, 5, 16, 199);
     			attr_dev(div1, "class", "container");
-    			add_location(div1, file$2, 4, 12, 222);
+    			add_location(div1, file$5, 4, 12, 158);
     			attr_dev(div2, "class", "xs-black-overlay");
-    			add_location(div2, file$2, 14, 12, 778);
+    			add_location(div2, file$5, 14, 12, 714);
     			attr_dev(div3, "class", "xs-welcome-content");
     			set_style(div3, "background-image", "url(assets/images/slide1.png)");
-    			add_location(div3, file$2, 3, 8, 120);
-    			add_location(h21, file$2, 19, 20, 1081);
-    			add_location(br1, file$2, 20, 92, 1212);
-    			add_location(p1, file$2, 20, 20, 1140);
+    			add_location(div3, file$5, 3, 8, 56);
+    			add_location(h21, file$5, 19, 20, 1017);
+    			add_location(br1, file$5, 20, 92, 1148);
+    			add_location(p1, file$5, 20, 20, 1076);
     			attr_dev(a1, "href", "#popularcause");
     			attr_dev(a1, "class", "btn btn-outline-primary");
-    			add_location(a1, file$2, 22, 20, 1300);
+    			add_location(a1, file$5, 22, 20, 1236);
     			attr_dev(div4, "class", "xs-welcome-wraper color-white");
-    			add_location(div4, file$2, 18, 16, 1016);
+    			add_location(div4, file$5, 18, 16, 952);
     			attr_dev(div5, "class", "container");
-    			add_location(div5, file$2, 17, 12, 975);
+    			add_location(div5, file$5, 17, 12, 911);
     			attr_dev(div6, "class", "xs-black-overlay");
-    			add_location(div6, file$2, 27, 12, 1531);
+    			add_location(div6, file$5, 27, 12, 1467);
     			attr_dev(div7, "class", "xs-welcome-content");
     			set_style(div7, "background-image", "url(assets/images/slide2.png)");
-    			add_location(div7, file$2, 16, 8, 872);
-    			add_location(h22, file$2, 32, 20, 1834);
-    			add_location(br2, file$2, 33, 92, 1969);
-    			add_location(p2, file$2, 33, 20, 1897);
+    			add_location(div7, file$5, 16, 8, 808);
+    			add_location(h22, file$5, 32, 20, 1770);
+    			add_location(br2, file$5, 33, 92, 1905);
+    			add_location(p2, file$5, 33, 20, 1833);
     			attr_dev(a2, "href", "#popularcause");
     			attr_dev(a2, "class", "btn btn-outline-primary");
-    			add_location(a2, file$2, 35, 20, 2057);
+    			add_location(a2, file$5, 35, 20, 1993);
     			attr_dev(div8, "class", "xs-welcome-wraper color-white");
-    			add_location(div8, file$2, 31, 16, 1769);
+    			add_location(div8, file$5, 31, 16, 1705);
     			attr_dev(div9, "class", "container");
-    			add_location(div9, file$2, 30, 12, 1728);
+    			add_location(div9, file$5, 30, 12, 1664);
     			attr_dev(div10, "class", "xs-black-overlay");
-    			add_location(div10, file$2, 40, 12, 2288);
+    			add_location(div10, file$5, 40, 12, 2224);
     			attr_dev(div11, "class", "xs-welcome-content");
     			set_style(div11, "background-image", "url(assets/images/slide3.png)");
-    			add_location(div11, file$2, 29, 8, 1625);
-    			attr_dev(div12, "class", "xs-banner-slider owl-carousel");
-    			add_location(div12, file$2, 2, 4, 67);
-    			attr_dev(section, "class", "xs-welcome-slider");
-    			add_location(section, file$2, 1, 0, 26);
+    			add_location(div11, file$5, 29, 8, 1561);
+    			add_location(div12, file$5, 2, 4, 41);
+    			add_location(section, file$5, 1, 0, 26);
     		},
     		l: function claim(nodes) {
     			throw new Error("options.hydrate only works if the component was compiled with the `hydratable: true` option");
@@ -1886,7 +3126,7 @@ var app = (function () {
 
     	dispatch_dev("SvelteRegisterBlock", {
     		block,
-    		id: create_fragment$4.name,
+    		id: create_fragment$7.name,
     		type: "component",
     		source: "",
     		ctx
@@ -1895,7 +3135,7 @@ var app = (function () {
     	return block;
     }
 
-    function instance$4($$self, $$props) {
+    function instance$7($$self, $$props) {
     	let { $$slots: slots = {}, $$scope } = $$props;
     	validate_slots('Welcome', slots, []);
     	const writable_props = [];
@@ -1910,22 +3150,22 @@ var app = (function () {
     class Welcome extends SvelteComponentDev {
     	constructor(options) {
     		super(options);
-    		init(this, options, instance$4, create_fragment$4, safe_not_equal, {});
+    		init$1(this, options, instance$7, create_fragment$7, safe_not_equal, {});
 
     		dispatch_dev("SvelteRegisterComponent", {
     			component: this,
     			tagName: "Welcome",
     			options,
-    			id: create_fragment$4.name
+    			id: create_fragment$7.name
     		});
     	}
     }
 
     /* src\components\Promo.svelte generated by Svelte v3.46.4 */
 
-    const file$1 = "src\\components\\Promo.svelte";
+    const file$4 = "src\\components\\Promo.svelte";
 
-    function create_fragment$3(ctx) {
+    function create_fragment$6(ctx) {
     	let section;
     	let div10;
     	let div0;
@@ -2042,54 +3282,54 @@ var app = (function () {
     			t26 = space();
     			p3 = element("p");
     			p3.textContent = "663 million people drink dirty water. Learn how access to clean water can improve health,\r\n                        boost local economies.";
-    			add_location(span0, file$1, 4, 54, 214);
-    			add_location(br0, file$1, 4, 95, 255);
+    			add_location(span0, file$4, 4, 54, 214);
+    			add_location(br0, file$4, 4, 95, 255);
     			attr_dev(h2, "class", "xs-mb-0 xs-title");
-    			add_location(h2, file$1, 4, 12, 172);
+    			add_location(h2, file$4, 4, 12, 172);
     			attr_dev(div0, "class", "xs-heading xs-mb-70 text-center");
-    			add_location(div0, file$1, 3, 8, 113);
+    			add_location(div0, file$4, 3, 8, 113);
     			attr_dev(span1, "class", "icon-water");
-    			add_location(span1, file$1, 10, 20, 468);
-    			add_location(br1, file$1, 11, 35, 537);
-    			add_location(h50, file$1, 11, 20, 522);
-    			add_location(p0, file$1, 12, 20, 583);
+    			add_location(span1, file$4, 10, 20, 468);
+    			add_location(br1, file$4, 11, 35, 537);
+    			add_location(h50, file$4, 11, 20, 522);
+    			add_location(p0, file$4, 12, 20, 583);
     			attr_dev(div1, "class", "xs-service-promo");
-    			add_location(div1, file$1, 9, 16, 416);
+    			add_location(div1, file$4, 9, 16, 416);
     			attr_dev(div2, "class", "col-md-6 col-lg-3");
-    			add_location(div2, file$1, 8, 12, 367);
+    			add_location(div2, file$4, 8, 12, 367);
     			attr_dev(span2, "class", "icon-groceries");
-    			add_location(span2, file$1, 18, 20, 916);
-    			add_location(br2, file$1, 19, 36, 990);
-    			add_location(h51, file$1, 19, 20, 974);
-    			add_location(p1, file$1, 20, 20, 1036);
+    			add_location(span2, file$4, 18, 20, 916);
+    			add_location(br2, file$4, 19, 36, 990);
+    			add_location(h51, file$4, 19, 20, 974);
+    			add_location(p1, file$4, 20, 20, 1036);
     			attr_dev(div3, "class", "xs-service-promo");
-    			add_location(div3, file$1, 17, 16, 864);
+    			add_location(div3, file$4, 17, 16, 864);
     			attr_dev(div4, "class", "col-md-6 col-lg-3");
-    			add_location(div4, file$1, 16, 12, 815);
+    			add_location(div4, file$4, 16, 12, 815);
     			attr_dev(span3, "class", "icon-heartbeat");
-    			add_location(span3, file$1, 26, 20, 1369);
-    			add_location(br3, file$1, 27, 32, 1439);
-    			add_location(h52, file$1, 27, 20, 1427);
-    			add_location(p2, file$1, 28, 20, 1491);
+    			add_location(span3, file$4, 26, 20, 1369);
+    			add_location(br3, file$4, 27, 32, 1439);
+    			add_location(h52, file$4, 27, 20, 1427);
+    			add_location(p2, file$4, 28, 20, 1491);
     			attr_dev(div5, "class", "xs-service-promo");
-    			add_location(div5, file$1, 25, 16, 1317);
+    			add_location(div5, file$4, 25, 16, 1317);
     			attr_dev(div6, "class", "col-md-6 col-lg-3");
-    			add_location(div6, file$1, 24, 12, 1268);
+    			add_location(div6, file$4, 24, 12, 1268);
     			attr_dev(span4, "class", "icon-open-book");
-    			add_location(span4, file$1, 34, 20, 1824);
-    			add_location(br4, file$1, 35, 39, 1901);
-    			add_location(h53, file$1, 35, 20, 1882);
-    			add_location(p3, file$1, 36, 20, 1950);
+    			add_location(span4, file$4, 34, 20, 1824);
+    			add_location(br4, file$4, 35, 39, 1901);
+    			add_location(h53, file$4, 35, 20, 1882);
+    			add_location(p3, file$4, 36, 20, 1950);
     			attr_dev(div7, "class", "xs-service-promo");
-    			add_location(div7, file$1, 33, 16, 1772);
+    			add_location(div7, file$4, 33, 16, 1772);
     			attr_dev(div8, "class", "col-md-6 col-lg-3");
-    			add_location(div8, file$1, 32, 12, 1723);
+    			add_location(div8, file$4, 32, 12, 1723);
     			attr_dev(div9, "class", "row");
-    			add_location(div9, file$1, 7, 8, 336);
+    			add_location(div9, file$4, 7, 8, 336);
     			attr_dev(div10, "class", "container");
-    			add_location(div10, file$1, 2, 4, 80);
+    			add_location(div10, file$4, 2, 4, 80);
     			attr_dev(section, "class", "xs-section-padding");
-    			add_location(section, file$1, 1, 0, 38);
+    			add_location(section, file$4, 1, 0, 38);
     		},
     		l: function claim(nodes) {
     			throw new Error("options.hydrate only works if the component was compiled with the `hydratable: true` option");
@@ -2160,7 +3400,7 @@ var app = (function () {
 
     	dispatch_dev("SvelteRegisterBlock", {
     		block,
-    		id: create_fragment$3.name,
+    		id: create_fragment$6.name,
     		type: "component",
     		source: "",
     		ctx
@@ -2169,7 +3409,7 @@ var app = (function () {
     	return block;
     }
 
-    function instance$3($$self, $$props) {
+    function instance$6($$self, $$props) {
     	let { $$slots: slots = {}, $$scope } = $$props;
     	validate_slots('Promo', slots, []);
     	const writable_props = [];
@@ -2184,22 +3424,22 @@ var app = (function () {
     class Promo extends SvelteComponentDev {
     	constructor(options) {
     		super(options);
-    		init(this, options, instance$3, create_fragment$3, safe_not_equal, {});
+    		init$1(this, options, instance$6, create_fragment$6, safe_not_equal, {});
 
     		dispatch_dev("SvelteRegisterComponent", {
     			component: this,
     			tagName: "Promo",
     			options,
-    			id: create_fragment$3.name
+    			id: create_fragment$6.name
     		});
     	}
     }
 
     /* src\components\Footer.svelte generated by Svelte v3.46.4 */
 
-    const file = "src\\components\\Footer.svelte";
+    const file$3 = "src\\components\\Footer.svelte";
 
-    function create_fragment$2(ctx) {
+    function create_fragment$5(ctx) {
     	let footer;
     	let div5;
     	let div4;
@@ -2372,7 +3612,7 @@ var app = (function () {
     			div7 = element("div");
     			div6 = element("div");
     			p1 = element("p");
-    			p1.textContent = "© Copyright 2018 Charity. - All Right's Reserved";
+    			p1.textContent = "© Copyright 2022 Charity. - All Right's Reserved";
     			t30 = space();
     			div8 = element("div");
     			nav = element("nav");
@@ -2392,122 +3632,122 @@ var app = (function () {
     			div12 = element("div");
     			a15 = element("a");
     			i7 = element("i");
-    			if (!src_url_equal(img.src, img_src_value = "assets/images/footer_logo.png")) attr_dev(img, "src", img_src_value);
+    			if (!src_url_equal(img.src, img_src_value = "/assets/images/footer_logo.png")) attr_dev(img, "src", img_src_value);
     			attr_dev(img, "alt", "");
-    			add_location(img, file, 7, 24, 332);
-    			attr_dev(a0, "href", "index.html");
+    			add_location(img, file$3, 7, 24, 323);
+    			attr_dev(a0, "href", "/");
     			attr_dev(a0, "class", "xs-footer-logo");
-    			add_location(a0, file, 6, 20, 262);
-    			add_location(p0, file, 9, 20, 428);
+    			add_location(a0, file$3, 6, 20, 262);
+    			add_location(p0, file$3, 9, 20, 420);
     			attr_dev(i0, "class", "fa fa-facebook");
-    			add_location(i0, file, 12, 62, 713);
+    			add_location(i0, file$3, 12, 62, 705);
     			attr_dev(a1, "href", "");
     			attr_dev(a1, "class", "color-facebook");
-    			add_location(a1, file, 12, 28, 679);
-    			add_location(li0, file, 12, 24, 675);
+    			add_location(a1, file$3, 12, 28, 671);
+    			add_location(li0, file$3, 12, 24, 667);
     			attr_dev(i1, "class", "fa fa-twitter");
-    			add_location(i1, file, 13, 61, 815);
+    			add_location(i1, file$3, 13, 61, 807);
     			attr_dev(a2, "href", "");
     			attr_dev(a2, "class", "color-twitter");
-    			add_location(a2, file, 13, 28, 782);
-    			add_location(li1, file, 13, 24, 778);
+    			add_location(a2, file$3, 13, 28, 774);
+    			add_location(li1, file$3, 13, 24, 770);
     			attr_dev(i2, "class", "fa fa-dribbble");
-    			add_location(i2, file, 14, 62, 917);
+    			add_location(i2, file$3, 14, 62, 909);
     			attr_dev(a3, "href", "");
     			attr_dev(a3, "class", "color-dribbble");
-    			add_location(a3, file, 14, 28, 883);
-    			add_location(li2, file, 14, 24, 879);
+    			add_location(a3, file$3, 14, 28, 875);
+    			add_location(li2, file$3, 14, 24, 871);
     			attr_dev(i3, "class", "fa fa-pinterest");
-    			add_location(i3, file, 15, 63, 1021);
+    			add_location(i3, file$3, 15, 63, 1013);
     			attr_dev(a4, "href", "");
     			attr_dev(a4, "class", "color-pinterest");
-    			add_location(a4, file, 15, 28, 986);
-    			add_location(li3, file, 15, 24, 982);
+    			add_location(a4, file$3, 15, 28, 978);
+    			add_location(li3, file$3, 15, 24, 974);
     			attr_dev(ul0, "class", "xs-social-list-v2");
-    			add_location(ul0, file, 11, 20, 619);
+    			add_location(ul0, file$3, 11, 20, 611);
     			attr_dev(div0, "class", "col-lg-3 col-md-6 footer-widget xs-pr-20");
-    			add_location(div0, file, 5, 16, 186);
+    			add_location(div0, file$3, 5, 16, 186);
     			attr_dev(h30, "class", "widget-title");
-    			add_location(h30, file, 19, 20, 1225);
-    			attr_dev(a5, "href", "index.html");
-    			add_location(a5, file, 21, 28, 1342);
-    			add_location(li4, file, 21, 24, 1338);
+    			add_location(h30, file$3, 19, 20, 1217);
+    			attr_dev(a5, "href", "/");
+    			add_location(a5, file$3, 21, 28, 1334);
+    			add_location(li4, file$3, 21, 24, 1330);
     			attr_dev(a6, "href", "#");
-    			add_location(a6, file, 22, 28, 1416);
-    			add_location(li5, file, 22, 24, 1412);
+    			add_location(a6, file$3, 22, 28, 1395);
+    			add_location(li5, file$3, 22, 24, 1391);
     			attr_dev(a7, "href", "#");
-    			add_location(a7, file, 23, 28, 1479);
-    			add_location(li6, file, 23, 24, 1475);
+    			add_location(a7, file$3, 23, 28, 1458);
+    			add_location(li6, file$3, 23, 24, 1454);
     			attr_dev(a8, "href", "#");
-    			add_location(a8, file, 24, 28, 1537);
-    			add_location(li7, file, 24, 24, 1533);
+    			add_location(a8, file$3, 24, 28, 1516);
+    			add_location(li7, file$3, 24, 24, 1512);
     			attr_dev(a9, "href", "#");
-    			add_location(a9, file, 25, 28, 1593);
-    			add_location(li8, file, 25, 24, 1589);
-    			attr_dev(a10, "href", "#");
-    			add_location(a10, file, 26, 28, 1648);
-    			add_location(li9, file, 26, 24, 1644);
+    			add_location(a9, file$3, 25, 28, 1572);
+    			add_location(li8, file$3, 25, 24, 1568);
+    			attr_dev(a10, "href", "/contact");
+    			add_location(a10, file$3, 26, 28, 1627);
+    			add_location(li9, file$3, 26, 24, 1623);
     			attr_dev(ul1, "class", "xs-footer-list");
-    			add_location(ul1, file, 20, 20, 1285);
+    			add_location(ul1, file$3, 20, 20, 1277);
     			attr_dev(div1, "class", "col-lg-4 col-md-6 footer-widget");
-    			add_location(div1, file, 18, 16, 1158);
+    			add_location(div1, file$3, 18, 16, 1150);
     			attr_dev(h31, "class", "widget-title");
-    			add_location(h31, file, 30, 20, 1812);
+    			add_location(h31, file$3, 30, 20, 1798);
     			attr_dev(i4, "class", "fa fa-home");
-    			add_location(i4, file, 32, 28, 1929);
-    			add_location(li10, file, 32, 24, 1925);
+    			add_location(i4, file$3, 32, 28, 1915);
+    			add_location(li10, file$3, 32, 24, 1911);
     			attr_dev(i5, "class", "fa fa-phone");
-    			add_location(i5, file, 33, 28, 2045);
-    			add_location(li11, file, 33, 24, 2041);
+    			add_location(i5, file$3, 33, 28, 2031);
+    			add_location(li11, file$3, 33, 24, 2027);
     			attr_dev(i6, "class", "fa fa-envelope-o");
-    			add_location(i6, file, 34, 28, 2159);
+    			add_location(i6, file$3, 34, 28, 2145);
     			attr_dev(a11, "href", "mailto:yourname@domain.com");
-    			add_location(a11, file, 34, 60, 2191);
-    			add_location(li12, file, 34, 24, 2155);
+    			add_location(a11, file$3, 34, 60, 2177);
+    			add_location(li12, file$3, 34, 24, 2141);
     			attr_dev(ul2, "class", "xs-info-list");
-    			add_location(ul2, file, 31, 20, 1874);
+    			add_location(ul2, file$3, 31, 20, 1860);
     			attr_dev(div2, "class", "col-lg-4 col-md-6 footer-widget");
-    			add_location(div2, file, 29, 16, 1745);
+    			add_location(div2, file$3, 29, 16, 1731);
     			attr_dev(div3, "class", "row");
-    			add_location(div3, file, 4, 12, 151);
+    			add_location(div3, file$3, 4, 12, 151);
     			attr_dev(div4, "class", "xs-footer-top-layer");
-    			add_location(div4, file, 3, 8, 104);
+    			add_location(div4, file$3, 3, 8, 104);
     			attr_dev(div5, "class", "container");
-    			add_location(div5, file, 2, 4, 71);
-    			add_location(p1, file, 46, 24, 2634);
+    			add_location(div5, file$3, 2, 4, 71);
+    			add_location(p1, file$3, 46, 24, 2620);
     			attr_dev(div6, "class", "xs-copyright-text");
-    			add_location(div6, file, 45, 20, 2577);
+    			add_location(div6, file$3, 45, 20, 2563);
     			attr_dev(div7, "class", "col-md-6");
-    			add_location(div7, file, 44, 16, 2533);
+    			add_location(div7, file$3, 44, 16, 2519);
     			attr_dev(a12, "href", "#");
-    			add_location(a12, file, 52, 32, 2900);
-    			add_location(li13, file, 52, 28, 2896);
+    			add_location(a12, file$3, 52, 32, 2886);
+    			add_location(li13, file$3, 52, 28, 2882);
     			attr_dev(a13, "href", "#");
-    			add_location(a13, file, 53, 32, 2958);
-    			add_location(li14, file, 53, 28, 2954);
+    			add_location(a13, file$3, 53, 32, 2944);
+    			add_location(li14, file$3, 53, 28, 2940);
     			attr_dev(a14, "href", "#");
-    			add_location(a14, file, 54, 32, 3022);
-    			add_location(li15, file, 54, 28, 3018);
-    			add_location(ul3, file, 51, 24, 2862);
+    			add_location(a14, file$3, 54, 32, 3008);
+    			add_location(li15, file$3, 54, 28, 3004);
+    			add_location(ul3, file$3, 51, 24, 2848);
     			attr_dev(nav, "class", "xs-footer-menu");
-    			add_location(nav, file, 50, 20, 2808);
+    			add_location(nav, file$3, 50, 20, 2794);
     			attr_dev(div8, "class", "col-md-6");
-    			add_location(div8, file, 49, 16, 2764);
+    			add_location(div8, file$3, 49, 16, 2750);
     			attr_dev(div9, "class", "row");
-    			add_location(div9, file, 43, 12, 2498);
+    			add_location(div9, file$3, 43, 12, 2484);
     			attr_dev(div10, "class", "xs-copyright");
-    			add_location(div10, file, 42, 8, 2458);
+    			add_location(div10, file$3, 42, 8, 2444);
     			attr_dev(div11, "class", "container");
-    			add_location(div11, file, 41, 4, 2425);
+    			add_location(div11, file$3, 41, 4, 2411);
     			attr_dev(i7, "class", "fa fa-angle-up");
-    			add_location(i7, file, 62, 43, 3267);
+    			add_location(i7, file$3, 62, 43, 3253);
     			attr_dev(a15, "href", "#");
     			attr_dev(a15, "class", "xs-back-to-top");
-    			add_location(a15, file, 62, 8, 3232);
+    			add_location(a15, file$3, 62, 8, 3218);
     			attr_dev(div12, "class", "xs-back-to-top-wraper");
-    			add_location(div12, file, 61, 4, 3187);
+    			add_location(div12, file$3, 61, 4, 3173);
     			attr_dev(footer, "class", "xs-footer-section");
-    			add_location(footer, file, 1, 0, 31);
+    			add_location(footer, file$3, 1, 0, 31);
     		},
     		l: function claim(nodes) {
     			throw new Error("options.hydrate only works if the component was compiled with the `hydratable: true` option");
@@ -2611,7 +3851,7 @@ var app = (function () {
 
     	dispatch_dev("SvelteRegisterBlock", {
     		block,
-    		id: create_fragment$2.name,
+    		id: create_fragment$5.name,
     		type: "component",
     		source: "",
     		ctx
@@ -2620,7 +3860,7 @@ var app = (function () {
     	return block;
     }
 
-    function instance$2($$self, $$props) {
+    function instance$5($$self, $$props) {
     	let { $$slots: slots = {}, $$scope } = $$props;
     	validate_slots('Footer', slots, []);
     	const writable_props = [];
@@ -2635,13 +3875,13 @@ var app = (function () {
     class Footer extends SvelteComponentDev {
     	constructor(options) {
     		super(options);
-    		init(this, options, instance$2, create_fragment$2, safe_not_equal, {});
+    		init$1(this, options, instance$5, create_fragment$5, safe_not_equal, {});
 
     		dispatch_dev("SvelteRegisterComponent", {
     			component: this,
     			tagName: "Footer",
     			options,
-    			id: create_fragment$2.name
+    			id: create_fragment$5.name
     		});
     	}
     }
@@ -2653,9 +3893,9 @@ var app = (function () {
             title: 'First Charity Project',
             category: 'Money',
             thumbnail: 'causes_4.jpg',
-            pledged: 99000,
+            pledged: 90000,
             target: 100000,
-            date_end: +new Date('10 April 2022'),
+            date_end: +new Date('20 April 2022'),
             profile_photo: 'https://live.staticflickr.com/4027/435772810_7136f4a9e9_s.jpg',
             profile_name: 'Viroid Bueno',
             no_pledged: 0,
@@ -2667,7 +3907,7 @@ var app = (function () {
 
     /* src\pages\Home.svelte generated by Svelte v3.46.4 */
 
-    function create_fragment$1(ctx) {
+    function create_fragment$4(ctx) {
     	let header;
     	let t0;
     	let welcome;
@@ -2744,7 +3984,7 @@ var app = (function () {
 
     	dispatch_dev("SvelteRegisterBlock", {
     		block,
-    		id: create_fragment$1.name,
+    		id: create_fragment$4.name,
     		type: "component",
     		source: "",
     		ctx
@@ -2753,7 +3993,7 @@ var app = (function () {
     	return block;
     }
 
-    function instance$1($$self, $$props, $$invalidate) {
+    function instance$4($$self, $$props, $$invalidate) {
     	let { $$slots: slots = {}, $$scope } = $$props;
     	validate_slots('Home', slots, []);
     	let title = "Charity";
@@ -2787,47 +4027,1849 @@ var app = (function () {
     class Home extends SvelteComponentDev {
     	constructor(options) {
     		super(options);
-    		init(this, options, instance$1, create_fragment$1, safe_not_equal, {});
+    		init$1(this, options, instance$4, create_fragment$4, safe_not_equal, {});
 
     		dispatch_dev("SvelteRegisterComponent", {
     			component: this,
     			tagName: "Home",
     			options,
+    			id: create_fragment$4.name
+    		});
+    	}
+    }
+
+    /* src\pages\About.svelte generated by Svelte v3.46.4 */
+    const file$2 = "src\\pages\\About.svelte";
+
+    function create_fragment$3(ctx) {
+    	let header;
+    	let t0;
+    	let section0;
+    	let div0;
+    	let t1;
+    	let div2;
+    	let div1;
+    	let h20;
+    	let t3;
+    	let p0;
+    	let t5;
+    	let ul0;
+    	let li0;
+    	let a0;
+    	let t7;
+    	let t8;
+    	let main;
+    	let div8;
+    	let div7;
+    	let div6;
+    	let div5;
+    	let div4;
+    	let img;
+    	let img_src_value;
+    	let t9;
+    	let div3;
+    	let a1;
+    	let i0;
+    	let t10;
+    	let section1;
+    	let div19;
+    	let div11;
+    	let div10;
+    	let div9;
+    	let h21;
+    	let t11;
+    	let span0;
+    	let t13;
+    	let t14;
+    	let div18;
+    	let div13;
+    	let div12;
+    	let h30;
+    	let t16;
+    	let p1;
+    	let t18;
+    	let div15;
+    	let div14;
+    	let h31;
+    	let t20;
+    	let p2;
+    	let t22;
+    	let div17;
+    	let div16;
+    	let h32;
+    	let t24;
+    	let ul1;
+    	let li1;
+    	let t26;
+    	let li2;
+    	let t28;
+    	let li3;
+    	let t30;
+    	let li4;
+    	let t32;
+    	let div32;
+    	let div30;
+    	let div20;
+    	let h22;
+    	let t34;
+    	let div29;
+    	let div22;
+    	let div21;
+    	let i1;
+    	let t35;
+    	let span1;
+    	let span2;
+    	let t38;
+    	let small0;
+    	let t40;
+    	let div24;
+    	let div23;
+    	let i2;
+    	let t41;
+    	let span3;
+    	let span4;
+    	let t44;
+    	let small1;
+    	let t46;
+    	let div26;
+    	let div25;
+    	let i3;
+    	let t47;
+    	let span5;
+    	let span6;
+    	let t50;
+    	let small2;
+    	let t52;
+    	let div28;
+    	let div27;
+    	let i4;
+    	let t53;
+    	let span7;
+    	let span8;
+    	let t56;
+    	let small3;
+    	let t58;
+    	let div31;
+    	let t59;
+    	let section2;
+    	let div44;
+    	let div34;
+    	let div33;
+    	let h23;
+    	let t61;
+    	let span9;
+    	let t62;
+    	let p3;
+    	let t64;
+    	let div43;
+    	let div36;
+    	let div35;
+    	let span10;
+    	let t65;
+    	let h50;
+    	let t66;
+    	let br0;
+    	let t67;
+    	let t68;
+    	let p4;
+    	let t70;
+    	let div38;
+    	let div37;
+    	let span11;
+    	let t71;
+    	let h51;
+    	let t72;
+    	let br1;
+    	let t73;
+    	let t74;
+    	let p5;
+    	let t76;
+    	let div40;
+    	let div39;
+    	let span12;
+    	let t77;
+    	let h52;
+    	let t78;
+    	let br2;
+    	let t79;
+    	let t80;
+    	let p6;
+    	let t82;
+    	let div42;
+    	let div41;
+    	let span13;
+    	let t83;
+    	let h53;
+    	let t84;
+    	let br3;
+    	let t85;
+    	let t86;
+    	let p7;
+    	let t88;
+    	let footer;
+    	let current;
+    	header = new Header({ $$inline: true });
+    	footer = new Footer({ $$inline: true });
+
+    	const block = {
+    		c: function create() {
+    			create_component(header.$$.fragment);
+    			t0 = space();
+    			section0 = element("section");
+    			div0 = element("div");
+    			t1 = space();
+    			div2 = element("div");
+    			div1 = element("div");
+    			h20 = element("h2");
+    			h20.textContent = "About Us";
+    			t3 = space();
+    			p0 = element("p");
+    			p0.textContent = "Give a helping hand for poor people";
+    			t5 = space();
+    			ul0 = element("ul");
+    			li0 = element("li");
+    			a0 = element("a");
+    			a0.textContent = "Home /";
+    			t7 = text(" About");
+    			t8 = space();
+    			main = element("main");
+    			div8 = element("div");
+    			div7 = element("div");
+    			div6 = element("div");
+    			div5 = element("div");
+    			div4 = element("div");
+    			img = element("img");
+    			t9 = space();
+    			div3 = element("div");
+    			a1 = element("a");
+    			i0 = element("i");
+    			t10 = space();
+    			section1 = element("section");
+    			div19 = element("div");
+    			div11 = element("div");
+    			div10 = element("div");
+    			div9 = element("div");
+    			h21 = element("h2");
+    			t11 = text("We are an Globian non-profit organization that ");
+    			span0 = element("span");
+    			span0.textContent = "supports";
+    			t13 = text(" good causes and positive change all over the world.");
+    			t14 = space();
+    			div18 = element("div");
+    			div13 = element("div");
+    			div12 = element("div");
+    			h30 = element("h3");
+    			h30.textContent = "Our Mission";
+    			t16 = space();
+    			p1 = element("p");
+    			p1.textContent = "The CharityPress community was named a “Top 25 Best Global Philanthropist” by Barron’s. We beat Oprah. And, Mashable named CharityPress something like that.";
+    			t18 = space();
+    			div15 = element("div");
+    			div14 = element("div");
+    			h31 = element("h3");
+    			h31.textContent = "Our Vission";
+    			t20 = space();
+    			p2 = element("p");
+    			p2.textContent = "The Globian Fund for Charities seeks positive change around the world through support of non-profit organizations dedicated to social, cultural.";
+    			t22 = space();
+    			div17 = element("div");
+    			div16 = element("div");
+    			h32 = element("h3");
+    			h32.textContent = "Our Values";
+    			t24 = space();
+    			ul1 = element("ul");
+    			li1 = element("li");
+    			li1.textContent = "Accountability";
+    			t26 = space();
+    			li2 = element("li");
+    			li2.textContent = "Reliability";
+    			t28 = space();
+    			li3 = element("li");
+    			li3.textContent = "Cost-effectiveness";
+    			t30 = space();
+    			li4 = element("li");
+    			li4.textContent = "Personal service";
+    			t32 = space();
+    			div32 = element("div");
+    			div30 = element("div");
+    			div20 = element("div");
+    			h22 = element("h2");
+    			h22.textContent = "Our agency has been present for over 30 years. We make the best for all our children.";
+    			t34 = space();
+    			div29 = element("div");
+    			div22 = element("div");
+    			div21 = element("div");
+    			i1 = element("i");
+    			t35 = space();
+    			span1 = element("span");
+    			span1.textContent = "0";
+    			span2 = element("span");
+    			span2.textContent = "M";
+    			t38 = space();
+    			small0 = element("small");
+    			small0.textContent = "Causes";
+    			t40 = space();
+    			div24 = element("div");
+    			div23 = element("div");
+    			i2 = element("i");
+    			t41 = space();
+    			span3 = element("span");
+    			span3.textContent = "0";
+    			span4 = element("span");
+    			span4.textContent = "k";
+    			t44 = space();
+    			small1 = element("small");
+    			small1.textContent = "Valunteer";
+    			t46 = space();
+    			div26 = element("div");
+    			div25 = element("div");
+    			i3 = element("i");
+    			t47 = space();
+    			span5 = element("span");
+    			span5.textContent = "0";
+    			span6 = element("span");
+    			span6.textContent = "k";
+    			t50 = space();
+    			small2 = element("small");
+    			small2.textContent = "Childrens";
+    			t52 = space();
+    			div28 = element("div");
+    			div27 = element("div");
+    			i4 = element("i");
+    			t53 = space();
+    			span7 = element("span");
+    			span7.textContent = "0";
+    			span8 = element("span");
+    			span8.textContent = "k";
+    			t56 = space();
+    			small3 = element("small");
+    			small3.textContent = "Countrys";
+    			t58 = space();
+    			div31 = element("div");
+    			t59 = space();
+    			section2 = element("section");
+    			div44 = element("div");
+    			div34 = element("div");
+    			div33 = element("div");
+    			h23 = element("h2");
+    			h23.textContent = "What We Do";
+    			t61 = space();
+    			span9 = element("span");
+    			t62 = space();
+    			p3 = element("p");
+    			p3.textContent = "It allows you to gather monthly subscriptions from fans to help fund your creative projects. They also encourage their users to offer rewards to fans as a way to repay them for their support.";
+    			t64 = space();
+    			div43 = element("div");
+    			div36 = element("div");
+    			div35 = element("div");
+    			span10 = element("span");
+    			t65 = space();
+    			h50 = element("h5");
+    			t66 = text("Pure Water ");
+    			br0 = element("br");
+    			t67 = text("For Poor People");
+    			t68 = space();
+    			p4 = element("p");
+    			p4.textContent = "663 million people drink dirty water. Learn how access to clean water can improve health, boost local economies.";
+    			t70 = space();
+    			div38 = element("div");
+    			div37 = element("div");
+    			span11 = element("span");
+    			t71 = space();
+    			h51 = element("h5");
+    			t72 = text("Healty Food ");
+    			br1 = element("br");
+    			t73 = text("For Poor People");
+    			t74 = space();
+    			p5 = element("p");
+    			p5.textContent = "663 million people drink dirty water. Learn how access to clean water can improve health, boost local economies.";
+    			t76 = space();
+    			div40 = element("div");
+    			div39 = element("div");
+    			span12 = element("span");
+    			t77 = space();
+    			h52 = element("h5");
+    			t78 = text("Medical ");
+    			br2 = element("br");
+    			t79 = text("Facilities for People");
+    			t80 = space();
+    			p6 = element("p");
+    			p6.textContent = "663 million people drink dirty water. Learn how access to clean water can improve health, boost local economies.";
+    			t82 = space();
+    			div42 = element("div");
+    			div41 = element("div");
+    			span13 = element("span");
+    			t83 = space();
+    			h53 = element("h5");
+    			t84 = text("Pure Education ");
+    			br3 = element("br");
+    			t85 = text("For Every Children");
+    			t86 = space();
+    			p7 = element("p");
+    			p7.textContent = "663 million people drink dirty water. Learn how access to clean water can improve health, boost local economies.";
+    			t88 = space();
+    			create_component(footer.$$.fragment);
+    			attr_dev(div0, "class", "xs-black-overlay");
+    			add_location(div0, file$2, 9, 1, 316);
+    			add_location(h20, file$2, 12, 3, 436);
+    			add_location(p0, file$2, 13, 3, 458);
+    			attr_dev(a0, "href", "index.html");
+    			attr_dev(a0, "class", "color-white");
+    			add_location(a0, file$2, 15, 47, 579);
+    			attr_dev(li0, "class", "badge badge-pill badge-primary");
+    			add_location(li0, file$2, 15, 4, 536);
+    			attr_dev(ul0, "class", "xs-breadcumb");
+    			add_location(ul0, file$2, 14, 3, 505);
+    			attr_dev(div1, "class", "color-white xs-inner-banner-content");
+    			add_location(div1, file$2, 11, 2, 382);
+    			attr_dev(div2, "class", "container");
+    			add_location(div2, file$2, 10, 1, 355);
+    			attr_dev(section0, "class", "xs-banner-inner-section parallax-window");
+    			set_style(section0, "background-image", "url('assets/images/about_bg.png')");
+    			add_location(section0, file$2, 8, 0, 197);
+    			if (!src_url_equal(img.src, img_src_value = "assets/images/video_img.jpg")) attr_dev(img, "src", img_src_value);
+    			attr_dev(img, "alt", "");
+    			add_location(img, file$2, 30, 5, 981);
+    			attr_dev(i0, "class", "fa fa-play");
+    			add_location(i0, file$2, 33, 7, 1177);
+    			attr_dev(a1, "href", "https://www.youtube.com/watch?v=Tb1HsAGy-ls");
+    			attr_dev(a1, "class", "xs-video-popup xs-round-btn");
+    			add_location(a1, file$2, 32, 6, 1078);
+    			attr_dev(div3, "class", "xs-video-popup-content");
+    			add_location(div3, file$2, 31, 5, 1034);
+    			attr_dev(div4, "class", "xs-video-popup-wraper");
+    			add_location(div4, file$2, 29, 4, 939);
+    			attr_dev(div5, "class", "col-lg-8 content-center");
+    			add_location(div5, file$2, 28, 3, 896);
+    			attr_dev(div6, "class", "row");
+    			add_location(div6, file$2, 27, 2, 874);
+    			attr_dev(div7, "class", "container");
+    			add_location(div7, file$2, 26, 1, 847);
+    			attr_dev(div8, "class", "xs-video-popup-section");
+    			add_location(div8, file$2, 25, 1, 808);
+    			attr_dev(span0, "class", "color-green");
+    			add_location(span0, file$2, 48, 81, 1743);
+    			attr_dev(h21, "class", "xs-mb-0 xs-title");
+    			add_location(h21, file$2, 48, 5, 1667);
+    			attr_dev(div9, "class", "xs-heading xs-mb-100 text-center");
+    			add_location(div9, file$2, 47, 4, 1614);
+    			attr_dev(div10, "class", "col-lg-11 content-center");
+    			add_location(div10, file$2, 46, 3, 1570);
+    			attr_dev(div11, "class", "row");
+    			add_location(div11, file$2, 45, 2, 1548);
+    			add_location(h30, file$2, 55, 5, 1982);
+    			attr_dev(p1, "class", "lead");
+    			add_location(p1, file$2, 56, 5, 2009);
+    			attr_dev(div12, "class", "xs-about-feature");
+    			add_location(div12, file$2, 54, 4, 1945);
+    			attr_dev(div13, "class", "col-md-4");
+    			add_location(div13, file$2, 53, 3, 1917);
+    			add_location(h31, file$2, 61, 5, 2278);
+    			attr_dev(p2, "class", "lead");
+    			add_location(p2, file$2, 62, 5, 2305);
+    			attr_dev(div14, "class", "xs-about-feature");
+    			add_location(div14, file$2, 60, 4, 2241);
+    			attr_dev(div15, "class", "col-md-4");
+    			add_location(div15, file$2, 59, 3, 2213);
+    			add_location(h32, file$2, 67, 5, 2562);
+    			add_location(li1, file$2, 69, 6, 2640);
+    			add_location(li2, file$2, 70, 6, 2671);
+    			add_location(li3, file$2, 71, 6, 2699);
+    			add_location(li4, file$2, 72, 6, 2734);
+    			attr_dev(ul1, "class", "xs-unorder-list play green-icon");
+    			add_location(ul1, file$2, 68, 5, 2588);
+    			attr_dev(div16, "class", "xs-about-feature");
+    			add_location(div16, file$2, 66, 4, 2525);
+    			attr_dev(div17, "class", "col-md-4");
+    			add_location(div17, file$2, 65, 3, 2497);
+    			attr_dev(div18, "class", "row");
+    			add_location(div18, file$2, 52, 2, 1895);
+    			attr_dev(div19, "class", "container");
+    			add_location(div19, file$2, 44, 1, 1521);
+    			attr_dev(section1, "class", "xs-content-section-padding");
+    			add_location(section1, file$2, 43, 1, 1474);
+    			attr_dev(h22, "class", "xs-title color-white small");
+    			add_location(h22, file$2, 84, 3, 3185);
+    			attr_dev(div20, "class", "row col-lg-10 xs-heading mx-auto");
+    			add_location(div20, file$2, 83, 2, 3134);
+    			attr_dev(i1, "class", "icon-donation_2");
+    			add_location(i1, file$2, 89, 5, 3437);
+    			attr_dev(span1, "class", "number-percentage-count number-percentage");
+    			attr_dev(span1, "data-value", "10");
+    			attr_dev(span1, "data-animation-duration", "3500");
+    			add_location(span1, file$2, 90, 5, 3475);
+    			add_location(span2, file$2, 90, 116, 3586);
+    			add_location(small0, file$2, 91, 5, 3607);
+    			attr_dev(div21, "class", "xs-single-funFact color-white");
+    			add_location(div21, file$2, 88, 4, 3387);
+    			attr_dev(div22, "class", "col-lg-3 col-md-6");
+    			add_location(div22, file$2, 87, 3, 3350);
+    			attr_dev(i2, "class", "icon-group");
+    			add_location(i2, file$2, 96, 5, 3743);
+    			attr_dev(span3, "class", "number-percentage-count number-percentage");
+    			attr_dev(span3, "data-value", "25");
+    			attr_dev(span3, "data-animation-duration", "3500");
+    			add_location(span3, file$2, 97, 5, 3776);
+    			add_location(span4, file$2, 97, 116, 3887);
+    			add_location(small1, file$2, 98, 5, 3908);
+    			attr_dev(div23, "class", "xs-single-funFact color-white");
+    			add_location(div23, file$2, 95, 4, 3693);
+    			attr_dev(div24, "class", "col-lg-3 col-md-6");
+    			add_location(div24, file$2, 94, 3, 3656);
+    			attr_dev(i3, "class", "icon-children");
+    			add_location(i3, file$2, 103, 5, 4047);
+    			attr_dev(span5, "class", "number-percentage-count number-percentage");
+    			attr_dev(span5, "data-value", "30");
+    			attr_dev(span5, "data-animation-duration", "3500");
+    			add_location(span5, file$2, 104, 5, 4083);
+    			add_location(span6, file$2, 104, 116, 4194);
+    			add_location(small2, file$2, 105, 5, 4215);
+    			attr_dev(div25, "class", "xs-single-funFact color-white");
+    			add_location(div25, file$2, 102, 4, 3997);
+    			attr_dev(div26, "class", "col-lg-3 col-md-6");
+    			add_location(div26, file$2, 101, 3, 3960);
+    			attr_dev(i4, "class", "icon-planet-earth");
+    			add_location(i4, file$2, 110, 5, 4354);
+    			attr_dev(span7, "class", "number-percentage-count number-percentage");
+    			attr_dev(span7, "data-value", "14");
+    			attr_dev(span7, "data-animation-duration", "3500");
+    			add_location(span7, file$2, 111, 5, 4394);
+    			add_location(span8, file$2, 111, 116, 4505);
+    			add_location(small3, file$2, 112, 5, 4526);
+    			attr_dev(div27, "class", "xs-single-funFact color-white");
+    			add_location(div27, file$2, 109, 4, 4304);
+    			attr_dev(div28, "class", "col-lg-3 col-md-6");
+    			add_location(div28, file$2, 108, 3, 4267);
+    			attr_dev(div29, "class", "row");
+    			add_location(div29, file$2, 86, 2, 3328);
+    			attr_dev(div30, "class", "container");
+    			add_location(div30, file$2, 82, 1, 3107);
+    			attr_dev(div31, "class", "xs-black-overlay");
+    			add_location(div31, file$2, 117, 1, 4634);
+    			attr_dev(div32, "class", "xs-funfact-section xs-content-section-padding waypoint-tigger parallax-window");
+    			set_style(div32, "background-image", "url('assets/images/backgrounds/parallax_1.jpg')");
+    			add_location(div32, file$2, 81, 1, 2939);
+    			attr_dev(h23, "class", "xs-title");
+    			add_location(h23, file$2, 125, 4, 4888);
+    			attr_dev(span9, "class", "xs-separetor dashed");
+    			add_location(span9, file$2, 126, 4, 4930);
+    			add_location(p3, file$2, 127, 4, 4977);
+    			attr_dev(div33, "class", "col-md-9 col-xl-9");
+    			add_location(div33, file$2, 124, 3, 4851);
+    			attr_dev(div34, "class", "xs-heading row xs-mb-60");
+    			add_location(div34, file$2, 123, 2, 4809);
+    			attr_dev(span10, "class", "icon-water color-orange");
+    			add_location(span10, file$2, 133, 5, 5343);
+    			add_location(br0, file$2, 134, 20, 5410);
+    			add_location(h50, file$2, 134, 5, 5395);
+    			add_location(p4, file$2, 135, 5, 5441);
+    			attr_dev(div35, "class", "xs-service-promo");
+    			add_location(div35, file$2, 132, 4, 5306);
+    			attr_dev(div36, "class", "col-md-6 col-lg-3");
+    			add_location(div36, file$2, 131, 3, 5269);
+    			attr_dev(span11, "class", "icon-groceries color-red");
+    			add_location(span11, file$2, 140, 5, 5692);
+    			add_location(br1, file$2, 141, 21, 5761);
+    			add_location(h51, file$2, 141, 5, 5745);
+    			add_location(p5, file$2, 142, 5, 5792);
+    			attr_dev(div37, "class", "xs-service-promo");
+    			add_location(div37, file$2, 139, 4, 5655);
+    			attr_dev(div38, "class", "col-md-6 col-lg-3");
+    			add_location(div38, file$2, 138, 3, 5618);
+    			attr_dev(span12, "class", "icon-heartbeat color-purple");
+    			add_location(span12, file$2, 147, 5, 6043);
+    			add_location(br2, file$2, 148, 17, 6111);
+    			add_location(h52, file$2, 148, 5, 6099);
+    			add_location(p6, file$2, 149, 5, 6148);
+    			attr_dev(div39, "class", "xs-service-promo");
+    			add_location(div39, file$2, 146, 4, 6006);
+    			attr_dev(div40, "class", "col-md-6 col-lg-3");
+    			add_location(div40, file$2, 145, 3, 5969);
+    			attr_dev(span13, "class", "icon-open-book color-green");
+    			add_location(span13, file$2, 154, 5, 6399);
+    			add_location(br3, file$2, 155, 24, 6473);
+    			add_location(h53, file$2, 155, 5, 6454);
+    			add_location(p7, file$2, 156, 5, 6507);
+    			attr_dev(div41, "class", "xs-service-promo");
+    			add_location(div41, file$2, 153, 4, 6362);
+    			attr_dev(div42, "class", "col-md-6 col-lg-3");
+    			add_location(div42, file$2, 152, 3, 6325);
+    			attr_dev(div43, "class", "row");
+    			add_location(div43, file$2, 130, 2, 5247);
+    			attr_dev(div44, "class", "container");
+    			add_location(div44, file$2, 122, 1, 4782);
+    			attr_dev(section2, "class", "xs-section-padding");
+    			add_location(section2, file$2, 121, 1, 4743);
+    			attr_dev(main, "class", "xs-main");
+    			add_location(main, file$2, 23, 0, 744);
+    		},
+    		l: function claim(nodes) {
+    			throw new Error("options.hydrate only works if the component was compiled with the `hydratable: true` option");
+    		},
+    		m: function mount(target, anchor) {
+    			mount_component(header, target, anchor);
+    			insert_dev(target, t0, anchor);
+    			insert_dev(target, section0, anchor);
+    			append_dev(section0, div0);
+    			append_dev(section0, t1);
+    			append_dev(section0, div2);
+    			append_dev(div2, div1);
+    			append_dev(div1, h20);
+    			append_dev(div1, t3);
+    			append_dev(div1, p0);
+    			append_dev(div1, t5);
+    			append_dev(div1, ul0);
+    			append_dev(ul0, li0);
+    			append_dev(li0, a0);
+    			append_dev(li0, t7);
+    			insert_dev(target, t8, anchor);
+    			insert_dev(target, main, anchor);
+    			append_dev(main, div8);
+    			append_dev(div8, div7);
+    			append_dev(div7, div6);
+    			append_dev(div6, div5);
+    			append_dev(div5, div4);
+    			append_dev(div4, img);
+    			append_dev(div4, t9);
+    			append_dev(div4, div3);
+    			append_dev(div3, a1);
+    			append_dev(a1, i0);
+    			append_dev(main, t10);
+    			append_dev(main, section1);
+    			append_dev(section1, div19);
+    			append_dev(div19, div11);
+    			append_dev(div11, div10);
+    			append_dev(div10, div9);
+    			append_dev(div9, h21);
+    			append_dev(h21, t11);
+    			append_dev(h21, span0);
+    			append_dev(h21, t13);
+    			append_dev(div19, t14);
+    			append_dev(div19, div18);
+    			append_dev(div18, div13);
+    			append_dev(div13, div12);
+    			append_dev(div12, h30);
+    			append_dev(div12, t16);
+    			append_dev(div12, p1);
+    			append_dev(div18, t18);
+    			append_dev(div18, div15);
+    			append_dev(div15, div14);
+    			append_dev(div14, h31);
+    			append_dev(div14, t20);
+    			append_dev(div14, p2);
+    			append_dev(div18, t22);
+    			append_dev(div18, div17);
+    			append_dev(div17, div16);
+    			append_dev(div16, h32);
+    			append_dev(div16, t24);
+    			append_dev(div16, ul1);
+    			append_dev(ul1, li1);
+    			append_dev(ul1, t26);
+    			append_dev(ul1, li2);
+    			append_dev(ul1, t28);
+    			append_dev(ul1, li3);
+    			append_dev(ul1, t30);
+    			append_dev(ul1, li4);
+    			append_dev(main, t32);
+    			append_dev(main, div32);
+    			append_dev(div32, div30);
+    			append_dev(div30, div20);
+    			append_dev(div20, h22);
+    			append_dev(div30, t34);
+    			append_dev(div30, div29);
+    			append_dev(div29, div22);
+    			append_dev(div22, div21);
+    			append_dev(div21, i1);
+    			append_dev(div21, t35);
+    			append_dev(div21, span1);
+    			append_dev(div21, span2);
+    			append_dev(div21, t38);
+    			append_dev(div21, small0);
+    			append_dev(div29, t40);
+    			append_dev(div29, div24);
+    			append_dev(div24, div23);
+    			append_dev(div23, i2);
+    			append_dev(div23, t41);
+    			append_dev(div23, span3);
+    			append_dev(div23, span4);
+    			append_dev(div23, t44);
+    			append_dev(div23, small1);
+    			append_dev(div29, t46);
+    			append_dev(div29, div26);
+    			append_dev(div26, div25);
+    			append_dev(div25, i3);
+    			append_dev(div25, t47);
+    			append_dev(div25, span5);
+    			append_dev(div25, span6);
+    			append_dev(div25, t50);
+    			append_dev(div25, small2);
+    			append_dev(div29, t52);
+    			append_dev(div29, div28);
+    			append_dev(div28, div27);
+    			append_dev(div27, i4);
+    			append_dev(div27, t53);
+    			append_dev(div27, span7);
+    			append_dev(div27, span8);
+    			append_dev(div27, t56);
+    			append_dev(div27, small3);
+    			append_dev(div32, t58);
+    			append_dev(div32, div31);
+    			append_dev(main, t59);
+    			append_dev(main, section2);
+    			append_dev(section2, div44);
+    			append_dev(div44, div34);
+    			append_dev(div34, div33);
+    			append_dev(div33, h23);
+    			append_dev(div33, t61);
+    			append_dev(div33, span9);
+    			append_dev(div33, t62);
+    			append_dev(div33, p3);
+    			append_dev(div44, t64);
+    			append_dev(div44, div43);
+    			append_dev(div43, div36);
+    			append_dev(div36, div35);
+    			append_dev(div35, span10);
+    			append_dev(div35, t65);
+    			append_dev(div35, h50);
+    			append_dev(h50, t66);
+    			append_dev(h50, br0);
+    			append_dev(h50, t67);
+    			append_dev(div35, t68);
+    			append_dev(div35, p4);
+    			append_dev(div43, t70);
+    			append_dev(div43, div38);
+    			append_dev(div38, div37);
+    			append_dev(div37, span11);
+    			append_dev(div37, t71);
+    			append_dev(div37, h51);
+    			append_dev(h51, t72);
+    			append_dev(h51, br1);
+    			append_dev(h51, t73);
+    			append_dev(div37, t74);
+    			append_dev(div37, p5);
+    			append_dev(div43, t76);
+    			append_dev(div43, div40);
+    			append_dev(div40, div39);
+    			append_dev(div39, span12);
+    			append_dev(div39, t77);
+    			append_dev(div39, h52);
+    			append_dev(h52, t78);
+    			append_dev(h52, br2);
+    			append_dev(h52, t79);
+    			append_dev(div39, t80);
+    			append_dev(div39, p6);
+    			append_dev(div43, t82);
+    			append_dev(div43, div42);
+    			append_dev(div42, div41);
+    			append_dev(div41, span13);
+    			append_dev(div41, t83);
+    			append_dev(div41, h53);
+    			append_dev(h53, t84);
+    			append_dev(h53, br3);
+    			append_dev(h53, t85);
+    			append_dev(div41, t86);
+    			append_dev(div41, p7);
+    			insert_dev(target, t88, anchor);
+    			mount_component(footer, target, anchor);
+    			current = true;
+    		},
+    		p: noop,
+    		i: function intro(local) {
+    			if (current) return;
+    			transition_in(header.$$.fragment, local);
+    			transition_in(footer.$$.fragment, local);
+    			current = true;
+    		},
+    		o: function outro(local) {
+    			transition_out(header.$$.fragment, local);
+    			transition_out(footer.$$.fragment, local);
+    			current = false;
+    		},
+    		d: function destroy(detaching) {
+    			destroy_component(header, detaching);
+    			if (detaching) detach_dev(t0);
+    			if (detaching) detach_dev(section0);
+    			if (detaching) detach_dev(t8);
+    			if (detaching) detach_dev(main);
+    			if (detaching) detach_dev(t88);
+    			destroy_component(footer, detaching);
+    		}
+    	};
+
+    	dispatch_dev("SvelteRegisterBlock", {
+    		block,
+    		id: create_fragment$3.name,
+    		type: "component",
+    		source: "",
+    		ctx
+    	});
+
+    	return block;
+    }
+
+    function instance$3($$self, $$props, $$invalidate) {
+    	let { $$slots: slots = {}, $$scope } = $$props;
+    	validate_slots('About', slots, []);
+    	const writable_props = [];
+
+    	Object.keys($$props).forEach(key => {
+    		if (!~writable_props.indexOf(key) && key.slice(0, 2) !== '$$' && key !== 'slot') console.warn(`<About> was created with unknown prop '${key}'`);
+    	});
+
+    	$$self.$capture_state = () => ({ Header, Footer });
+    	return [];
+    }
+
+    class About extends SvelteComponentDev {
+    	constructor(options) {
+    		super(options);
+    		init$1(this, options, instance$3, create_fragment$3, safe_not_equal, {});
+
+    		dispatch_dev("SvelteRegisterComponent", {
+    			component: this,
+    			tagName: "About",
+    			options,
+    			id: create_fragment$3.name
+    		});
+    	}
+    }
+
+    /* src\pages\Contact.svelte generated by Svelte v3.46.4 */
+    const file$1 = "src\\pages\\Contact.svelte";
+
+    function create_fragment$2(ctx) {
+    	let header;
+    	let t0;
+    	let section0;
+    	let div0;
+    	let t1;
+    	let div2;
+    	let div1;
+    	let h2;
+    	let t3;
+    	let p;
+    	let t5;
+    	let ul;
+    	let li;
+    	let a;
+    	let t7;
+    	let t8;
+    	let main;
+    	let section1;
+    	let div19;
+    	let div18;
+    	let div17;
+    	let div13;
+    	let div12;
+    	let h4;
+    	let t10;
+    	let form;
+    	let div5;
+    	let input0;
+    	let t11;
+    	let div4;
+    	let div3;
+    	let i0;
+    	let t12;
+    	let div8;
+    	let input1;
+    	let t13;
+    	let div7;
+    	let div6;
+    	let i1;
+    	let t14;
+    	let div11;
+    	let textarea;
+    	let t15;
+    	let div10;
+    	let div9;
+    	let i2;
+    	let t16;
+    	let button;
+    	let t18;
+    	let div16;
+    	let div15;
+    	let div14;
+    	let t19;
+    	let footer;
+    	let current;
+    	header = new Header({ $$inline: true });
+    	footer = new Footer({ $$inline: true });
+
+    	const block = {
+    		c: function create() {
+    			create_component(header.$$.fragment);
+    			t0 = space();
+    			section0 = element("section");
+    			div0 = element("div");
+    			t1 = space();
+    			div2 = element("div");
+    			div1 = element("div");
+    			h2 = element("h2");
+    			h2.textContent = "Contact Us";
+    			t3 = space();
+    			p = element("p");
+    			p.textContent = "Give a helping hand for poor people";
+    			t5 = space();
+    			ul = element("ul");
+    			li = element("li");
+    			a = element("a");
+    			a.textContent = "Home /";
+    			t7 = text(" Contact");
+    			t8 = space();
+    			main = element("main");
+    			section1 = element("section");
+    			div19 = element("div");
+    			div18 = element("div");
+    			div17 = element("div");
+    			div13 = element("div");
+    			div12 = element("div");
+    			h4 = element("h4");
+    			h4.textContent = "Drop us a line";
+    			t10 = space();
+    			form = element("form");
+    			div5 = element("div");
+    			input0 = element("input");
+    			t11 = space();
+    			div4 = element("div");
+    			div3 = element("div");
+    			i0 = element("i");
+    			t12 = space();
+    			div8 = element("div");
+    			input1 = element("input");
+    			t13 = space();
+    			div7 = element("div");
+    			div6 = element("div");
+    			i1 = element("i");
+    			t14 = space();
+    			div11 = element("div");
+    			textarea = element("textarea");
+    			t15 = space();
+    			div10 = element("div");
+    			div9 = element("div");
+    			i2 = element("i");
+    			t16 = space();
+    			button = element("button");
+    			button.textContent = "submit";
+    			t18 = space();
+    			div16 = element("div");
+    			div15 = element("div");
+    			div14 = element("div");
+    			t19 = space();
+    			create_component(footer.$$.fragment);
+    			attr_dev(div0, "class", "xs-black-overlay");
+    			add_location(div0, file$1, 48, 1, 2520);
+    			add_location(h2, file$1, 51, 3, 2640);
+    			add_location(p, file$1, 52, 3, 2664);
+    			attr_dev(a, "href", "index.html");
+    			attr_dev(a, "class", "color-white");
+    			add_location(a, file$1, 54, 47, 2785);
+    			attr_dev(li, "class", "badge badge-pill badge-primary");
+    			add_location(li, file$1, 54, 4, 2742);
+    			attr_dev(ul, "class", "xs-breadcumb");
+    			add_location(ul, file$1, 53, 3, 2711);
+    			attr_dev(div1, "class", "color-white xs-inner-banner-content");
+    			add_location(div1, file$1, 50, 2, 2586);
+    			attr_dev(div2, "class", "container");
+    			add_location(div2, file$1, 49, 1, 2559);
+    			attr_dev(section0, "class", "xs-banner-inner-section parallax-window");
+    			set_style(section0, "background-image", "url('assets/images/contact_bg.png')");
+    			add_location(section0, file$1, 47, 0, 2399);
+    			add_location(h4, file$1, 70, 6, 3208);
+    			attr_dev(input0, "type", "text");
+    			attr_dev(input0, "name", "name");
+    			attr_dev(input0, "id", "xs-name");
+    			attr_dev(input0, "class", "form-control");
+    			attr_dev(input0, "placeholder", "Enter Your Name.....");
+    			add_location(input0, file$1, 73, 8, 3375);
+    			attr_dev(i0, "class", "fa fa-user");
+    			add_location(i0, file$1, 75, 39, 3558);
+    			attr_dev(div3, "class", "input-group-text");
+    			add_location(div3, file$1, 75, 9, 3528);
+    			attr_dev(div4, "class", "input-group-append");
+    			add_location(div4, file$1, 74, 8, 3485);
+    			attr_dev(div5, "class", "input-group");
+    			add_location(div5, file$1, 72, 7, 3340);
+    			attr_dev(input1, "type", "email");
+    			attr_dev(input1, "name", "email");
+    			attr_dev(input1, "id", "xs-email");
+    			attr_dev(input1, "class", "form-control");
+    			attr_dev(input1, "placeholder", "Enter Your Email.....");
+    			add_location(input1, file$1, 79, 8, 3690);
+    			attr_dev(i1, "class", "fa fa-envelope-o");
+    			add_location(i1, file$1, 81, 39, 3877);
+    			attr_dev(div6, "class", "input-group-text");
+    			add_location(div6, file$1, 81, 9, 3847);
+    			attr_dev(div7, "class", "input-group-append");
+    			add_location(div7, file$1, 80, 8, 3804);
+    			attr_dev(div8, "class", "input-group");
+    			add_location(div8, file$1, 78, 7, 3655);
+    			attr_dev(textarea, "name", "massage");
+    			attr_dev(textarea, "placeholder", "Enter Your Message.....");
+    			attr_dev(textarea, "id", "xs-massage");
+    			attr_dev(textarea, "class", "form-control");
+    			attr_dev(textarea, "cols", "30");
+    			attr_dev(textarea, "rows", "10");
+    			add_location(textarea, file$1, 85, 8, 4029);
+    			attr_dev(i2, "class", "fa fa-pencil");
+    			add_location(i2, file$1, 87, 39, 4243);
+    			attr_dev(div9, "class", "input-group-text");
+    			add_location(div9, file$1, 87, 9, 4213);
+    			attr_dev(div10, "class", "input-group-append");
+    			add_location(div10, file$1, 86, 8, 4170);
+    			attr_dev(div11, "class", "input-group massage-group");
+    			add_location(div11, file$1, 84, 7, 3980);
+    			attr_dev(button, "class", "btn btn-success");
+    			attr_dev(button, "type", "submit");
+    			attr_dev(button, "id", "xs-submit");
+    			add_location(button, file$1, 90, 7, 4342);
+    			attr_dev(form, "action", "#");
+    			attr_dev(form, "method", "POST");
+    			attr_dev(form, "id", "xs-contact-form");
+    			attr_dev(form, "class", "xs-contact-form contact-form-v2");
+    			add_location(form, file$1, 71, 6, 3239);
+    			attr_dev(div12, "class", "xs-contact-form-wraper");
+    			add_location(div12, file$1, 69, 5, 3164);
+    			attr_dev(div13, "class", "col-lg-6");
+    			add_location(div13, file$1, 68, 4, 3135);
+    			attr_dev(div14, "id", "xs-map");
+    			attr_dev(div14, "class", "xs-box-shadow-2");
+    			add_location(div14, file$1, 96, 6, 4625);
+    			attr_dev(div15, "class", "xs-maps-wraper map-wraper-v2");
+    			add_location(div15, file$1, 95, 5, 4575);
+    			attr_dev(div16, "class", "col-lg-6");
+    			add_location(div16, file$1, 94, 4, 4546);
+    			attr_dev(div17, "class", "row");
+    			add_location(div17, file$1, 67, 3, 3112);
+    			attr_dev(div18, "class", "xs-contact-container");
+    			add_location(div18, file$1, 66, 2, 3073);
+    			attr_dev(div19, "class", "container");
+    			add_location(div19, file$1, 65, 1, 3046);
+    			attr_dev(section1, "class", "xs-contact-section-v2");
+    			add_location(section1, file$1, 64, 1, 3004);
+    			attr_dev(main, "class", "xs-main");
+    			add_location(main, file$1, 62, 0, 2952);
+    		},
+    		l: function claim(nodes) {
+    			throw new Error("options.hydrate only works if the component was compiled with the `hydratable: true` option");
+    		},
+    		m: function mount(target, anchor) {
+    			mount_component(header, target, anchor);
+    			insert_dev(target, t0, anchor);
+    			insert_dev(target, section0, anchor);
+    			append_dev(section0, div0);
+    			append_dev(section0, t1);
+    			append_dev(section0, div2);
+    			append_dev(div2, div1);
+    			append_dev(div1, h2);
+    			append_dev(div1, t3);
+    			append_dev(div1, p);
+    			append_dev(div1, t5);
+    			append_dev(div1, ul);
+    			append_dev(ul, li);
+    			append_dev(li, a);
+    			append_dev(li, t7);
+    			insert_dev(target, t8, anchor);
+    			insert_dev(target, main, anchor);
+    			append_dev(main, section1);
+    			append_dev(section1, div19);
+    			append_dev(div19, div18);
+    			append_dev(div18, div17);
+    			append_dev(div17, div13);
+    			append_dev(div13, div12);
+    			append_dev(div12, h4);
+    			append_dev(div12, t10);
+    			append_dev(div12, form);
+    			append_dev(form, div5);
+    			append_dev(div5, input0);
+    			append_dev(div5, t11);
+    			append_dev(div5, div4);
+    			append_dev(div4, div3);
+    			append_dev(div3, i0);
+    			append_dev(form, t12);
+    			append_dev(form, div8);
+    			append_dev(div8, input1);
+    			append_dev(div8, t13);
+    			append_dev(div8, div7);
+    			append_dev(div7, div6);
+    			append_dev(div6, i1);
+    			append_dev(form, t14);
+    			append_dev(form, div11);
+    			append_dev(div11, textarea);
+    			append_dev(div11, t15);
+    			append_dev(div11, div10);
+    			append_dev(div10, div9);
+    			append_dev(div9, i2);
+    			append_dev(form, t16);
+    			append_dev(form, button);
+    			append_dev(div17, t18);
+    			append_dev(div17, div16);
+    			append_dev(div16, div15);
+    			append_dev(div15, div14);
+    			insert_dev(target, t19, anchor);
+    			mount_component(footer, target, anchor);
+    			current = true;
+    		},
+    		p: noop,
+    		i: function intro(local) {
+    			if (current) return;
+    			transition_in(header.$$.fragment, local);
+    			transition_in(footer.$$.fragment, local);
+    			current = true;
+    		},
+    		o: function outro(local) {
+    			transition_out(header.$$.fragment, local);
+    			transition_out(footer.$$.fragment, local);
+    			current = false;
+    		},
+    		d: function destroy(detaching) {
+    			destroy_component(header, detaching);
+    			if (detaching) detach_dev(t0);
+    			if (detaching) detach_dev(section0);
+    			if (detaching) detach_dev(t8);
+    			if (detaching) detach_dev(main);
+    			if (detaching) detach_dev(t19);
+    			destroy_component(footer, detaching);
+    		}
+    	};
+
+    	dispatch_dev("SvelteRegisterBlock", {
+    		block,
+    		id: create_fragment$2.name,
+    		type: "component",
+    		source: "",
+    		ctx
+    	});
+
+    	return block;
+    }
+
+    function init() {
+    	// Basic options for a simple Google Map
+    	var mapOptions = {
+    		// How zoomed in you want the map to start at (always required)
+    		zoom: 11,
+    		scrollwheel: false,
+    		navigationControl: false,
+    		mapTypeControl: true,
+    		scaleControl: false,
+    		draggable: true,
+    		disableDefaultUI: true,
+    		// The latitude and longitude to center the map (always required)
+    		center: new google.maps.LatLng(40.6700, -73.9400), // New York
+    		// How you would like to style the map. 
+    		// This is where you would paste any style found on Snazzy Maps.
+    		styles: [
+    			{
+    				"featureType": "administrative",
+    				"elementType": "all",
+    				"stylers": [{ "saturation": "-100" }]
+    			},
+    			{
+    				"featureType": "administrative.province",
+    				"elementType": "all",
+    				"stylers": [{ "visibility": "off" }]
+    			},
+    			{
+    				"featureType": "landscape",
+    				"elementType": "all",
+    				"stylers": [{ "saturation": -100 }, { "lightness": 65 }, { "visibility": "on" }]
+    			},
+    			{
+    				"featureType": "poi",
+    				"elementType": "all",
+    				"stylers": [
+    					{ "saturation": -100 },
+    					{ "lightness": "50" },
+    					{ "visibility": "simplified" }
+    				]
+    			},
+    			{
+    				"featureType": "road",
+    				"elementType": "all",
+    				"stylers": [{ "saturation": "-100" }]
+    			},
+    			{
+    				"featureType": "road.highway",
+    				"elementType": "all",
+    				"stylers": [{ "visibility": "simplified" }]
+    			},
+    			{
+    				"featureType": "road.arterial",
+    				"elementType": "all",
+    				"stylers": [{ "lightness": "30" }]
+    			},
+    			{
+    				"featureType": "road.local",
+    				"elementType": "all",
+    				"stylers": [{ "lightness": "40" }]
+    			},
+    			{
+    				"featureType": "transit",
+    				"elementType": "all",
+    				"stylers": [{ "saturation": -100 }, { "visibility": "simplified" }]
+    			},
+    			{
+    				"featureType": "water",
+    				"elementType": "geometry",
+    				"stylers": [{ "hue": "#ffff00" }, { "lightness": -25 }, { "saturation": -97 }]
+    			},
+    			{
+    				"featureType": "water",
+    				"elementType": "labels",
+    				"stylers": [{ "lightness": -25 }, { "saturation": -100 }]
+    			}
+    		]
+    	};
+
+    	// Get the HTML DOM element that will contain your map 
+    	// We are using a div with id="map" seen below in the <body>
+    	var mapElement = document.getElementById('xs-map');
+
+    	// Create the Google Map using our element and options defined above
+    	var map = new google.maps.Map(mapElement, mapOptions);
+
+    	// Let's also add a marker while we're at it
+    	new google.maps.Marker({
+    			position: new google.maps.LatLng(40.6700, -73.9400),
+    			map,
+    			title: 'Snazzy!'
+    		});
+    }
+
+    function instance$2($$self, $$props, $$invalidate) {
+    	let { $$slots: slots = {}, $$scope } = $$props;
+    	validate_slots('Contact', slots, []);
+    	google.maps.event.addDomListener(window, 'load', init);
+    	const writable_props = [];
+
+    	Object.keys($$props).forEach(key => {
+    		if (!~writable_props.indexOf(key) && key.slice(0, 2) !== '$$' && key !== 'slot') console.warn(`<Contact> was created with unknown prop '${key}'`);
+    	});
+
+    	$$self.$capture_state = () => ({ Header, Footer, init });
+    	return [];
+    }
+
+    class Contact extends SvelteComponentDev {
+    	constructor(options) {
+    		super(options);
+    		init$1(this, options, instance$2, create_fragment$2, safe_not_equal, {});
+
+    		dispatch_dev("SvelteRegisterComponent", {
+    			component: this,
+    			tagName: "Contact",
+    			options,
+    			id: create_fragment$2.name
+    		});
+    	}
+    }
+
+    /* src\pages\Donation.svelte generated by Svelte v3.46.4 */
+    const file = "src\\pages\\Donation.svelte";
+
+    // (43:1) {#if data}
+    function create_if_block(ctx) {
+    	let section0;
+    	let div0;
+    	let t0;
+    	let div2;
+    	let div1;
+    	let h20;
+    	let t2;
+    	let p0;
+    	let t3_value = /*data*/ ctx[1].title + "";
+    	let t3;
+    	let t4;
+    	let ul;
+    	let li;
+    	let a;
+    	let t6;
+    	let t7;
+    	let main;
+    	let section1;
+    	let div14;
+    	let div13;
+    	let div4;
+    	let div3;
+    	let img;
+    	let img_src_value;
+    	let t8;
+    	let div12;
+    	let div11;
+    	let div5;
+    	let h21;
+    	let t9_value = /*data*/ ctx[1].title + "";
+    	let t9;
+    	let t10;
+    	let p1;
+    	let t11;
+    	let span0;
+    	let t13;
+    	let span1;
+    	let t15;
+    	let span2;
+    	let t16;
+    	let form;
+    	let div6;
+    	let label0;
+    	let t17;
+    	let span3;
+    	let t19;
+    	let input0;
+    	let t20;
+    	let div10;
+    	let label1;
+    	let t21;
+    	let span4;
+    	let t23;
+    	let input1;
+    	let t24;
+    	let div9;
+    	let div7;
+    	let label2;
+    	let t25;
+    	let span5;
+    	let t27;
+    	let input2;
+    	let t28;
+    	let div8;
+    	let input3;
+    	let t29;
+    	let label3;
+    	let t30;
+    	let span6;
+    	let t32;
+    	let button;
+    	let span7;
+    	let i;
+    	let t33;
+
+    	const block = {
+    		c: function create() {
+    			section0 = element("section");
+    			div0 = element("div");
+    			t0 = space();
+    			div2 = element("div");
+    			div1 = element("div");
+    			h20 = element("h2");
+    			h20.textContent = "Donate Now";
+    			t2 = space();
+    			p0 = element("p");
+    			t3 = text(t3_value);
+    			t4 = space();
+    			ul = element("ul");
+    			li = element("li");
+    			a = element("a");
+    			a.textContent = "Home /";
+    			t6 = text(" Donate");
+    			t7 = space();
+    			main = element("main");
+    			section1 = element("section");
+    			div14 = element("div");
+    			div13 = element("div");
+    			div4 = element("div");
+    			div3 = element("div");
+    			img = element("img");
+    			t8 = space();
+    			div12 = element("div");
+    			div11 = element("div");
+    			div5 = element("div");
+    			h21 = element("h2");
+    			t9 = text(t9_value);
+    			t10 = space();
+    			p1 = element("p");
+    			t11 = text("To learn more about make donate charity\r\n\twith us visit our \"");
+    			span0 = element("span");
+    			span0.textContent = "Contact\r\n\tus";
+    			t13 = text("\" site. By calling ");
+    			span1 = element("span");
+    			span1.textContent = "+44(0) 800 883 8450";
+    			t15 = text(".");
+    			span2 = element("span");
+    			t16 = space();
+    			form = element("form");
+    			div6 = element("div");
+    			label0 = element("label");
+    			t17 = text("Donation Amount ");
+    			span3 = element("span");
+    			span3.textContent = "**";
+    			t19 = space();
+    			input0 = element("input");
+    			t20 = space();
+    			div10 = element("div");
+    			label1 = element("label");
+    			t21 = text("Your name\r\n        ");
+    			span4 = element("span");
+    			span4.textContent = "**";
+    			t23 = space();
+    			input1 = element("input");
+    			t24 = space();
+    			div9 = element("div");
+    			div7 = element("div");
+    			label2 = element("label");
+    			t25 = text("Your Email\r\n            ");
+    			span5 = element("span");
+    			span5.textContent = "**";
+    			t27 = space();
+    			input2 = element("input");
+    			t28 = space();
+    			div8 = element("div");
+    			input3 = element("input");
+    			t29 = space();
+    			label3 = element("label");
+    			t30 = text("I Agree\r\n    ");
+    			span6 = element("span");
+    			span6.textContent = "**";
+    			t32 = space();
+    			button = element("button");
+    			span7 = element("span");
+    			i = element("i");
+    			t33 = text(" Donate\r\n\tnow");
+    			attr_dev(div0, "class", "xs-black-overlay");
+    			add_location(div0, file, 45, 1, 988);
+    			add_location(h20, file, 48, 1, 1105);
+    			add_location(p0, file, 49, 1, 1127);
+    			attr_dev(a, "href", "/");
+    			attr_dev(a, "class", "color-white");
+    			add_location(a, file, 52, 1, 1223);
+    			attr_dev(li, "class", "badge badge-pill badge-primary");
+    			add_location(li, file, 51, 1, 1177);
+    			attr_dev(ul, "class", "xs-breadcumb");
+    			add_location(ul, file, 50, 1, 1149);
+    			attr_dev(div1, "class", "color-white xs-inner-banner-content");
+    			add_location(div1, file, 47, 1, 1053);
+    			attr_dev(div2, "class", "container");
+    			add_location(div2, file, 46, 1, 1027);
+    			attr_dev(section0, "class", "xs-banner-inner-section parallax-window");
+    			set_style(section0, "background-image", "url('/assets/images/katt-yukawa-K0E6E0a0R3A-unsplash.jpg')");
+    			add_location(section0, file, 43, 1, 841);
+    			if (!src_url_equal(img.src, img_src_value = /*data*/ ctx[1].thumbnail)) attr_dev(img, "src", img_src_value);
+    			attr_dev(img, "class", "img-responsive");
+    			attr_dev(img, "alt", "Family Images");
+    			add_location(img, file, 64, 38, 1588);
+    			attr_dev(div3, "class", "xs-donation-form-images svelte-1qtpgtk");
+    			add_location(div3, file, 64, 1, 1551);
+    			attr_dev(div4, "class", "col-lg-6");
+    			add_location(div4, file, 63, 1, 1526);
+    			attr_dev(h21, "class", "xs-title");
+    			add_location(h21, file, 70, 1, 1779);
+    			attr_dev(span0, "class", "color-green");
+    			add_location(span0, file, 72, 20, 1898);
+    			attr_dev(span1, "class", "color-green");
+    			add_location(span1, file, 73, 29, 1962);
+    			attr_dev(p1, "class", "small");
+    			add_location(p1, file, 71, 1, 1820);
+    			attr_dev(span2, "class", "xs-separetor v2");
+    			add_location(span2, file, 74, 46, 2022);
+    			attr_dev(div5, "class", "xs-heading xs-mb-30");
+    			add_location(div5, file, 69, 1, 1743);
+    			attr_dev(span3, "class", "color-light-red");
+    			add_location(span3, file, 80, 45, 2281);
+    			attr_dev(label0, "for", "xs-donate-name");
+    			add_location(label0, file, 80, 1, 2237);
+    			attr_dev(input0, "type", "text");
+    			attr_dev(input0, "name", "name");
+    			attr_dev(input0, "id", "xs-donate-name");
+    			attr_dev(input0, "class", "form-control");
+    			attr_dev(input0, "placeholder", "Minimum of $5");
+    			add_location(input0, file, 81, 37, 2332);
+    			attr_dev(div6, "class", "xs-input-group");
+    			add_location(div6, file, 79, 1, 2206);
+    			attr_dev(span4, "class", "color-light-red");
+    			add_location(span4, file, 88, 8, 2567);
+    			attr_dev(label1, "for", "xs-donate-name");
+    			add_location(label1, file, 86, 4, 2510);
+    			attr_dev(input1, "type", "text");
+    			attr_dev(input1, "name", "name");
+    			attr_dev(input1, "id", "xs-donate-name");
+    			attr_dev(input1, "class", "form-control");
+    			attr_dev(input1, "placeholder", "Your awesome name");
+    			add_location(input1, file, 90, 3, 2625);
+    			attr_dev(span5, "class", "color-light-red");
+    			add_location(span5, file, 101, 12, 2882);
+    			attr_dev(label2, "for", "xs-donate-email");
+    			add_location(label2, file, 99, 8, 2815);
+    			attr_dev(input2, "type", "email");
+    			attr_dev(input2, "name", "email");
+    			attr_dev(input2, "id", "xs-donate-email");
+    			attr_dev(input2, "class", "form-control");
+    			attr_dev(input2, "placeholder", "email@awesome.com");
+    			add_location(input2, file, 103, 8, 2949);
+    			attr_dev(div7, "class", "xs-input-group");
+    			add_location(div7, file, 98, 8, 2776);
+    			attr_dev(input3, "type", "checkbox");
+    			attr_dev(input3, "name", "agree");
+    			attr_dev(input3, "id", "xs-donate-agree");
+    			attr_dev(input3, "class", "svelte-1qtpgtk");
+    			add_location(input3, file, 112, 4, 3193);
+    			attr_dev(span6, "class", "color-light-red");
+    			add_location(span6, file, 115, 4, 3310);
+    			attr_dev(label3, "for", "xs-donate-agree");
+    			attr_dev(label3, "class", "svelte-1qtpgtk");
+    			add_location(label3, file, 113, 4, 3258);
+    			attr_dev(div8, "class", "xs-input-group svelte-1qtpgtk");
+    			attr_dev(div8, "id", "xs-input-checkbox");
+    			add_location(div8, file, 111, 4, 3136);
+    			attr_dev(i, "class", "fa fa-heart");
+    			add_location(i, file, 139, 9, 3963);
+    			attr_dev(span7, "class", "badge");
+    			add_location(span7, file, 138, 47, 3940);
+    			attr_dev(button, "type", "submit");
+    			attr_dev(button, "class", "btn btn-warning");
+    			add_location(button, file, 138, 1, 3894);
+    			add_location(div9, file, 97, 4, 2761);
+    			attr_dev(div10, "class", "xs-input-group");
+    			add_location(div10, file, 85, 1, 2476);
+    			attr_dev(form, "action", "#");
+    			attr_dev(form, "method", "post");
+    			attr_dev(form, "id", "xs-donation-form");
+    			attr_dev(form, "class", "xs-donation-form");
+    			attr_dev(form, "name", "xs-donation-form");
+    			add_location(form, file, 77, 1, 2098);
+    			attr_dev(div11, "class", "xs-donation-form-wraper");
+    			add_location(div11, file, 68, 1, 1703);
+    			attr_dev(div12, "class", "col-lg-6");
+    			add_location(div12, file, 67, 1, 1678);
+    			attr_dev(div13, "class", "row");
+    			add_location(div13, file, 62, 1, 1506);
+    			attr_dev(div14, "class", "container");
+    			add_location(div14, file, 61, 1, 1480);
+    			attr_dev(section1, "class", "xs-section-padding bg-gray");
+    			add_location(section1, file, 60, 1, 1433);
+    			attr_dev(main, "class", "xs-main");
+    			add_location(main, file, 58, 1, 1375);
+    		},
+    		m: function mount(target, anchor) {
+    			insert_dev(target, section0, anchor);
+    			append_dev(section0, div0);
+    			append_dev(section0, t0);
+    			append_dev(section0, div2);
+    			append_dev(div2, div1);
+    			append_dev(div1, h20);
+    			append_dev(div1, t2);
+    			append_dev(div1, p0);
+    			append_dev(p0, t3);
+    			append_dev(div1, t4);
+    			append_dev(div1, ul);
+    			append_dev(ul, li);
+    			append_dev(li, a);
+    			append_dev(li, t6);
+    			insert_dev(target, t7, anchor);
+    			insert_dev(target, main, anchor);
+    			append_dev(main, section1);
+    			append_dev(section1, div14);
+    			append_dev(div14, div13);
+    			append_dev(div13, div4);
+    			append_dev(div4, div3);
+    			append_dev(div3, img);
+    			append_dev(div13, t8);
+    			append_dev(div13, div12);
+    			append_dev(div12, div11);
+    			append_dev(div11, div5);
+    			append_dev(div5, h21);
+    			append_dev(h21, t9);
+    			append_dev(div5, t10);
+    			append_dev(div5, p1);
+    			append_dev(p1, t11);
+    			append_dev(p1, span0);
+    			append_dev(p1, t13);
+    			append_dev(p1, span1);
+    			append_dev(p1, t15);
+    			append_dev(div5, span2);
+    			append_dev(div11, t16);
+    			append_dev(div11, form);
+    			append_dev(form, div6);
+    			append_dev(div6, label0);
+    			append_dev(label0, t17);
+    			append_dev(label0, span3);
+    			append_dev(div6, t19);
+    			append_dev(div6, input0);
+    			append_dev(form, t20);
+    			append_dev(form, div10);
+    			append_dev(div10, label1);
+    			append_dev(label1, t21);
+    			append_dev(label1, span4);
+    			append_dev(div10, t23);
+    			append_dev(div10, input1);
+    			append_dev(div10, t24);
+    			append_dev(div10, div9);
+    			append_dev(div9, div7);
+    			append_dev(div7, label2);
+    			append_dev(label2, t25);
+    			append_dev(label2, span5);
+    			append_dev(div7, t27);
+    			append_dev(div7, input2);
+    			append_dev(div9, t28);
+    			append_dev(div9, div8);
+    			append_dev(div8, input3);
+    			append_dev(div8, t29);
+    			append_dev(div8, label3);
+    			append_dev(label3, t30);
+    			append_dev(label3, span6);
+    			append_dev(div9, t32);
+    			append_dev(div9, button);
+    			append_dev(button, span7);
+    			append_dev(span7, i);
+    			append_dev(button, t33);
+    		},
+    		p: function update(ctx, dirty) {
+    			if (dirty & /*data*/ 2 && t3_value !== (t3_value = /*data*/ ctx[1].title + "")) set_data_dev(t3, t3_value);
+
+    			if (dirty & /*data*/ 2 && !src_url_equal(img.src, img_src_value = /*data*/ ctx[1].thumbnail)) {
+    				attr_dev(img, "src", img_src_value);
+    			}
+
+    			if (dirty & /*data*/ 2 && t9_value !== (t9_value = /*data*/ ctx[1].title + "")) set_data_dev(t9, t9_value);
+    		},
+    		d: function destroy(detaching) {
+    			if (detaching) detach_dev(section0);
+    			if (detaching) detach_dev(t7);
+    			if (detaching) detach_dev(main);
+    		}
+    	};
+
+    	dispatch_dev("SvelteRegisterBlock", {
+    		block,
+    		id: create_if_block.name,
+    		type: "if",
+    		source: "(43:1) {#if data}",
+    		ctx
+    	});
+
+    	return block;
+    }
+
+    function create_fragment$1(ctx) {
+    	let header;
+    	let t0;
+    	let t1;
+    	let footer;
+    	let current;
+    	header = new Header({ $$inline: true });
+    	let if_block = /*data*/ ctx[1] && create_if_block(ctx);
+    	footer = new Footer({ $$inline: true });
+
+    	const block = {
+    		c: function create() {
+    			create_component(header.$$.fragment);
+    			t0 = space();
+    			if (if_block) if_block.c();
+    			t1 = space();
+    			create_component(footer.$$.fragment);
+    		},
+    		l: function claim(nodes) {
+    			throw new Error("options.hydrate only works if the component was compiled with the `hydratable: true` option");
+    		},
+    		m: function mount(target, anchor) {
+    			mount_component(header, target, anchor);
+    			insert_dev(target, t0, anchor);
+    			if (if_block) if_block.m(target, anchor);
+    			insert_dev(target, t1, anchor);
+    			mount_component(footer, target, anchor);
+    			current = true;
+    		},
+    		p: function update(ctx, [dirty]) {
+    			if (/*data*/ ctx[1]) {
+    				if (if_block) {
+    					if_block.p(ctx, dirty);
+    				} else {
+    					if_block = create_if_block(ctx);
+    					if_block.c();
+    					if_block.m(t1.parentNode, t1);
+    				}
+    			} else if (if_block) {
+    				if_block.d(1);
+    				if_block = null;
+    			}
+    		},
+    		i: function intro(local) {
+    			if (current) return;
+    			transition_in(header.$$.fragment, local);
+    			transition_in(footer.$$.fragment, local);
+    			current = true;
+    		},
+    		o: function outro(local) {
+    			transition_out(header.$$.fragment, local);
+    			transition_out(footer.$$.fragment, local);
+    			current = false;
+    		},
+    		d: function destroy(detaching) {
+    			destroy_component(header, detaching);
+    			if (detaching) detach_dev(t0);
+    			if (if_block) if_block.d(detaching);
+    			if (detaching) detach_dev(t1);
+    			destroy_component(footer, detaching);
+    		}
+    	};
+
+    	dispatch_dev("SvelteRegisterBlock", {
+    		block,
+    		id: create_fragment$1.name,
+    		type: "component",
+    		source: "",
+    		ctx
+    	});
+
+    	return block;
+    }
+
+    function instance$1($$self, $$props, $$invalidate) {
+    	let $params,
+    		$$unsubscribe_params = noop,
+    		$$subscribe_params = () => ($$unsubscribe_params(), $$unsubscribe_params = subscribe(params, $$value => $$invalidate(2, $params = $$value)), params);
+
+    	$$self.$$.on_destroy.push(() => $$unsubscribe_params());
+    	let { $$slots: slots = {}, $$scope } = $$props;
+    	validate_slots('Donation', slots, []);
+    	let { params } = $$props;
+    	validate_store(params, 'params');
+    	$$subscribe_params();
+    	let data = {};
+
+    	function getCharity(id) {
+    		return charities.charities.find(function (charity) {
+    			return charity.id === parseInt(id);
+    		});
+    	}
+
+    	data = getCharity$($params);
+    	const writable_props = ['params'];
+
+    	Object.keys($$props).forEach(key => {
+    		if (!~writable_props.indexOf(key) && key.slice(0, 2) !== '$$' && key !== 'slot') console.warn(`<Donation> was created with unknown prop '${key}'`);
+    	});
+
+    	$$self.$$set = $$props => {
+    		if ('params' in $$props) $$subscribe_params($$invalidate(0, params = $$props.params));
+    	};
+
+    	$$self.$capture_state = () => ({
+    		Header,
+    		Footer,
+    		charities: charities.charities,
+    		params,
+    		data,
+    		getCharity,
+    		$params
+    	});
+
+    	$$self.$inject_state = $$props => {
+    		if ('params' in $$props) $$subscribe_params($$invalidate(0, params = $$props.params));
+    		if ('data' in $$props) $$invalidate(1, data = $$props.data);
+    	};
+
+    	if ($$props && "$$inject" in $$props) {
+    		$$self.$inject_state($$props.$$inject);
+    	}
+
+    	return [params, data];
+    }
+
+    class Donation extends SvelteComponentDev {
+    	constructor(options) {
+    		super(options);
+    		init$1(this, options, instance$1, create_fragment$1, safe_not_equal, { params: 0 });
+
+    		dispatch_dev("SvelteRegisterComponent", {
+    			component: this,
+    			tagName: "Donation",
+    			options,
     			id: create_fragment$1.name
     		});
+
+    		const { ctx } = this.$$;
+    		const props = options.props || {};
+
+    		if (/*params*/ ctx[0] === undefined && !('params' in props)) {
+    			console.warn("<Donation> was created without expected prop 'params'");
+    		}
+    	}
+
+    	get params() {
+    		throw new Error("<Donation>: Props cannot be read directly from the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
+    	}
+
+    	set params(value) {
+    		throw new Error("<Donation>: Props cannot be set directly on the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
     	}
     }
 
     /* src\App.svelte generated by Svelte v3.46.4 */
 
     function create_fragment(ctx) {
-    	let home;
+    	let switch_instance;
+    	let switch_instance_anchor;
     	let current;
-    	home = new Home({ $$inline: true });
+    	var switch_value = /*page*/ ctx[0];
+
+    	function switch_props(ctx) {
+    		return {
+    			props: { params: /*params*/ ctx[1] },
+    			$$inline: true
+    		};
+    	}
+
+    	if (switch_value) {
+    		switch_instance = new switch_value(switch_props(ctx));
+    	}
 
     	const block = {
     		c: function create() {
-    			create_component(home.$$.fragment);
+    			if (switch_instance) create_component(switch_instance.$$.fragment);
+    			switch_instance_anchor = empty();
     		},
     		l: function claim(nodes) {
     			throw new Error("options.hydrate only works if the component was compiled with the `hydratable: true` option");
     		},
     		m: function mount(target, anchor) {
-    			mount_component(home, target, anchor);
+    			if (switch_instance) {
+    				mount_component(switch_instance, target, anchor);
+    			}
+
+    			insert_dev(target, switch_instance_anchor, anchor);
     			current = true;
     		},
-    		p: noop,
+    		p: function update(ctx, [dirty]) {
+    			const switch_instance_changes = {};
+    			if (dirty & /*params*/ 2) switch_instance_changes.params = /*params*/ ctx[1];
+
+    			if (switch_value !== (switch_value = /*page*/ ctx[0])) {
+    				if (switch_instance) {
+    					group_outros();
+    					const old_component = switch_instance;
+
+    					transition_out(old_component.$$.fragment, 1, 0, () => {
+    						destroy_component(old_component, 1);
+    					});
+
+    					check_outros();
+    				}
+
+    				if (switch_value) {
+    					switch_instance = new switch_value(switch_props(ctx));
+    					create_component(switch_instance.$$.fragment);
+    					transition_in(switch_instance.$$.fragment, 1);
+    					mount_component(switch_instance, switch_instance_anchor.parentNode, switch_instance_anchor);
+    				} else {
+    					switch_instance = null;
+    				}
+    			} else if (switch_value) {
+    				switch_instance.$set(switch_instance_changes);
+    			}
+    		},
     		i: function intro(local) {
     			if (current) return;
-    			transition_in(home.$$.fragment, local);
+    			if (switch_instance) transition_in(switch_instance.$$.fragment, local);
     			current = true;
     		},
     		o: function outro(local) {
-    			transition_out(home.$$.fragment, local);
+    			if (switch_instance) transition_out(switch_instance.$$.fragment, local);
     			current = false;
     		},
     		d: function destroy(detaching) {
-    			destroy_component(home, detaching);
+    			if (detaching) detach_dev(switch_instance_anchor);
+    			if (switch_instance) destroy_component(switch_instance, detaching);
     		}
     	};
 
@@ -2845,20 +5887,53 @@ var app = (function () {
     function instance($$self, $$props, $$invalidate) {
     	let { $$slots: slots = {}, $$scope } = $$props;
     	validate_slots('App', slots, []);
+    	let page$1, params;
+    	page("/", () => $$invalidate(0, page$1 = Home));
+    	page("/about", () => $$invalidate(0, page$1 = About));
+    	page("/contact", () => $$invalidate(0, page$1 = Contact));
+
+    	page(
+    		"/donation/:id",
+    		(ctx, next) => {
+    			$$invalidate(1, params = ctx.params);
+    			next();
+    		},
+    		page$1 = Donation
+    	);
+
+    	page.start();
     	const writable_props = [];
 
     	Object.keys($$props).forEach(key => {
     		if (!~writable_props.indexOf(key) && key.slice(0, 2) !== '$$' && key !== 'slot') console.warn(`<App> was created with unknown prop '${key}'`);
     	});
 
-    	$$self.$capture_state = () => ({ Home });
-    	return [];
+    	$$self.$capture_state = () => ({
+    		router: page,
+    		Home,
+    		About,
+    		Contact,
+    		Donation,
+    		page: page$1,
+    		params
+    	});
+
+    	$$self.$inject_state = $$props => {
+    		if ('page' in $$props) $$invalidate(0, page$1 = $$props.page);
+    		if ('params' in $$props) $$invalidate(1, params = $$props.params);
+    	};
+
+    	if ($$props && "$$inject" in $$props) {
+    		$$self.$inject_state($$props.$$inject);
+    	}
+
+    	return [page$1, params];
     }
 
     class App extends SvelteComponentDev {
     	constructor(options) {
     		super(options);
-    		init(this, options, instance, create_fragment, safe_not_equal, {});
+    		init$1(this, options, instance, create_fragment, safe_not_equal, {});
 
     		dispatch_dev("SvelteRegisterComponent", {
     			component: this,

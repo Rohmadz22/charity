@@ -19,7 +19,7 @@
     const delta   = date_end - new Date();
     
     const oneDay = 24 * 60 * 60 * 1000;
-    return Math.round(Math.abs(delta/oneDay))
+    return Math.round(Math.abs(delta/oneDay));
     }
 
     function handleButton() {
@@ -176,7 +176,7 @@
                         data-target="#exampleModal"
                         class="btn btn-primary btn-block">
                             Donate This Cause
-                    </a>
+                        </a>
                     </div><!-- .xs-item-content END -->
                 </div><!-- .xs-popular-item END -->
             </div>

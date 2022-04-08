@@ -18,8 +18,8 @@
                 <div class="col-lg-7">
                     <ul class="nav-menu">
                         <li><a href="/">home</a></li>
-                        <li><a href="about">about</a></li>
-                        <li><a href="contact">Contact</a></li>
+                        <li><a href="/about">about</a></li>
+                        <li><a href="/contact">Contact</a></li>
                     </ul><!-- .nav-menu END -->
                 </div>
                 <div class="xs-navs-button d-flex-center-end col-lg-3">

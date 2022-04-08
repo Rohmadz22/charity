@@ -4,15 +4,16 @@
     import { charities } from "../data/charities.js";
 
 	export let params;
-	let data ={};
+	let data;
+	
 	
 	function getCharity(id) {
 		return charities.find(function(charity) {
 			return charity.id ===parseInt(id);
 		})
 	}
-data = getCharity(params.id);
-</script>
+	data = getCharity(params.id);
+	</script>
 
 <style>
     #xs-input-checkbox {
@@ -41,9 +42,10 @@ data = getCharity(params.id);
 
 	<!-- svelte-ignore missing-declaration -->
 	{#if data}
-	<section class="xs-banner-inner-section parallax-window" style=
-	"background-image:url('/assets/images/katt-yukawa-K0E6E0a0R3A-unsplash.jpg')">
-	<div class="xs-black-overlay"></div>
+	<section class="xs-banner-inner-section parallax-window" 
+	style="background-image:url('/assets/images/katt-yukawa-K0E6E0a0R3A-unsplash.jpg')">
+	<div class="xs-black-overlay">
+	</div>
 	<div class="container">
 	<div class="color-white xs-inner-banner-content">
 	<h2>Donate Now</h2>
@@ -62,7 +64,7 @@ data = getCharity(params.id);
 	<div class="container">
 	<div class="row">
 	<div class="col-lg-6">
-	<div class="xs-donation-form-images"><img src={data.thumbnail} class="img-responsive" alt=
+	<div class="xs-donation-form-images"><img src="/assets/images/christian-dubovan-Y_x747Yshlw-unsplash.jpg" class="img-responsive" alt=
 	"Family Images"></div>
 	</div>
 	<div class="col-lg-6">
@@ -144,7 +146,8 @@ data = getCharity(params.id);
 	</div>
 	</div><!-- .row end -->
 	</div><!-- .container end -->
-	</section><!-- End donation form section -->
+	</section>
+	<!-- End donation form section -->
 	</main>
 	{/if}
 

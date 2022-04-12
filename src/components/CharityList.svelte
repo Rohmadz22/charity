@@ -1,4 +1,5 @@
 <script>
+    import {onMount, onDestroy, beforeUpdate, afterUpdate} from 'svelte';
     import Modal from './Modal.svelte'
 
     export let charities;
@@ -39,6 +40,9 @@
     display: block;
     background-color:rgba(0, 0, 0, 0.45) ;
 }
+.pledged {
+    margin-right: 2em;
+}
  </style>
 
 <!-- popularCauses section -->
@@ -52,9 +56,10 @@
                     raise capital from anyone.</p>
             </div><!-- .xs-heading-title END -->
         </div><!-- .row end -->
-        {#if charities !== undefined}
-        {#each charities as charity}
+        
+        
         <div class="row">
+            {#each charities as charity}
             <div class="col-lg-4 col-md-6">
                 {#if isModalOpen === true}
                 <Modal>
@@ -114,7 +119,7 @@
                 <div class="xs-popular-item xs-box-shadow">
                     <div class="xs-item-header">
 
-                        <img src="assets/images/causes/causes_4.png" alt="">
+                        <img src={charity.thumbnail} alt="">
                     
 
                         <div class="xs-skill-bar">
@@ -142,7 +147,8 @@
                         </a>
 
                         <ul class="xs-list-with-content">
-                            <li>{formatCurrency(charity.pledged)}<span>Pledged</span></li>
+                            <li class="pledged">
+                                {formatCurrency(charity.pledged)}<span>Pledged</span></li>
                             <li><span class="number-percentage-count number-percentage"
                                 data-value="90"
                                 data-animation-duration="3500">
@@ -180,9 +186,10 @@
                     </div><!-- .xs-item-content END -->
                 </div><!-- .xs-popular-item END -->
             </div>
-            </div>
-            {/each}
-        {/if}
+        {/each}
+    </div>
+            
+       
         </div><!-- .row end -->
     <!-- </div>.container end -->
 </section><!-- End popularCauses section -->

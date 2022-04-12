@@ -1,7 +1,7 @@
 module.exports = {
 charities: [
     {
-        id: 1,
+        id:1,
         title: 'First Charity Project',
         category: 'Money',
         thumbnail: 'https://live.staticflickr.com/7721/17102022497_84b7c99c342_w.jpg',

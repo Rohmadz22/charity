@@ -6,12 +6,14 @@
 	import Contact from "./pages/Contact.svelte";
 	import Donation from "./pages/Donation.svelte";
 	import NotFound from "./pages/NotFound.svelte";
+	import Success from "./pages/Success.svelte";
 
 	let page, params;
 
 router("/", () =>(page = Home));
 router("/about", () =>(page = About));
 router("/contact", () =>(page = Contact));
+router("/success", () =>(page = Success));
 router("/donation/:id", (ctx, next) =>{
 params = ctx.params;
 next();
@@ -24,3 +26,20 @@ router.start();
 </script>
 
 <svelte:component this={page} {params} />
+
+<!-- let title = "Charity";
+setTimeout(function() {
+	title = "Donation";	
+},2000);
+
+</script>
+
+<h1>{title}</h1>
+
+<style>
+h1 {
+	font-size: 3em;
+	color: #e2071c;
+}	
+</style> -->
+

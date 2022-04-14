@@ -10,15 +10,14 @@
 	name, 
 	email, 
 	agree = false;
+
 	let data = getCharity(params.id);
 	
-	
 	async function getCharity(id) {
-		const res = await fetch(
-			`https://charity-api-bwa.herokuapp.com/charities/${id}`
-			);
-		return res.json();		
+	const res = await fetch(`https://charity-api-bwa.herokuapp.com/charities/${id}`);
+	return res.json();
 	}
+	
 
 function handleButtonClick() {
 	console.log("Button click");

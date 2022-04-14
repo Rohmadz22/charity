@@ -1,6 +1,7 @@
 <script>
-    import {onMount, onDestroy, beforeUpdate, afterUpdate} from 'svelte';
+    import { onMount, onDestroy, beforeUpdate, afterUpdate } from "svelte"; 
     import Modal from './Modal.svelte'
+    import Loader from './Loader.svelte'
 
     export let charities;
     let isModalOpen = false;
@@ -13,7 +14,7 @@
         return nominal.toLocaleString('id-ID', {
             style: 'currency',
             currency: 'IDR',
-        })
+        });
     }
 
     function calculateDaysRemaining(date_end){
@@ -185,7 +186,7 @@
                         </a>
                     </div><!-- .xs-item-content END -->
                 </div><!-- .xs-popular-item END -->
-            </div>
+            </div>           
         {/each}
     </div>
             
